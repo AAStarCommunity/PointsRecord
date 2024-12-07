@@ -1,17 +1,28 @@
 'use client'
 
-import { WagmiProvider as Provider } from 'wagmi'
-import { wagmiConfig } from '@/config/wagmi'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WagmiConfig, createConfig, configureChains } from 'wagmi'
+import { optimismSepolia } from '@wagmi/core/chains'
+import { InjectedConnector } from '@wagmi/core/connectors/injected'
+import { publicProvider } from '@wagmi/core/providers/public'
+import { alchemyProvider } from '@wagmi/core/providers/alchemy'
 
-const queryClient = new QueryClient()
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  [optimismSepolia],
+  [
+    alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || '' }),
+    publicProvider(),
+  ],
+)
+
+const config = createConfig({
+  autoConnect: true,
+  connectors: [
+    new InjectedConnector({ chains }),
+  ],
+  publicClient,
+  webSocketPublicClient,
+})
 
 export function WagmiProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <Provider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </Provider>
-  )
+  return <WagmiConfig config={config}>{children}</WagmiConfig>
 } 

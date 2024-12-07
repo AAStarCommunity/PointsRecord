@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ContributionType } from '@/types';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, usePrepareContractWrite, useContractWrite } from 'wagmi';
 import { CONFIG } from '@/config';
 import { POINTS_RECORD_ABI } from '@/contracts/PointsRecord';
 
@@ -15,7 +15,15 @@ export function RecordForm() {
     hours: 1
   }]);
 
-  const { writeContract, isPending, isSuccess, error } = useWriteContract();
+  const { config } = usePrepareContractWrite({
+    address: CONFIG.CONTRACT_ADDRESS as `0x${string}`,
+    abi: POINTS_RECORD_ABI,
+    functionName: 'addRecord',
+    args: [records[0].contributionType, records[0].details, records[0].hours],
+    enabled: !!address && records[0].details.length > 0,
+  })
+
+  const { write: addRecord, isLoading, isSuccess, error } = useContractWrite(config)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,15 +32,15 @@ export function RecordForm() {
       return;
     }
 
+    if (!addRecord) {
+      alert('Write function not ready');
+      return;
+    }
+
     try {
       // Submit each record to the contract
       for (const record of records) {
-        await writeContract({
-          address: CONFIG.CONTRACT_ADDRESS as `0x${string}`,
-          abi: POINTS_RECORD_ABI,
-          functionName: 'addRecord',
-          args: [record.contributionType, record.details, record.hours],
-        });
+        await addRecord();
       }
     } catch (err) {
       console.error('Error submitting records:', err);
@@ -120,12 +128,12 @@ export function RecordForm() {
         </button>
         <button
           type="submit"
-          disabled={isPending || !address}
+          disabled={isLoading || !address}
           className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
-            isPending || !address ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+            isLoading || !address ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
           }`}
         >
-          {isPending ? 'Submitting...' : 'Submit Records'}
+          {isLoading ? 'Submitting...' : 'Submit Records'}
         </button>
       </div>
 
