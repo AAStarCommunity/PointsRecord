@@ -25,6 +25,9 @@ contract PointsRecordTest is Test {
         // Set nickname first
         pointsRecord.setNickname("Alice");
         
+        // Store current timestamp
+        uint256 currentTime = block.timestamp;
+        
         // Add a record
         pointsRecord.addRecord(
             "code",
@@ -39,14 +42,15 @@ contract PointsRecordTest is Test {
             string memory nickname,
             string memory contributionType,
             string memory details,
-            uint8 hours
+            uint8 hoursSpent
         ) = pointsRecord.records(0);
 
+        assertEq(timestamp, currentTime);
         assertEq(contributorAddress, user1);
         assertEq(nickname, "Alice");
         assertEq(contributionType, "code");
         assertEq(details, "https://github.com/test/pr/123");
-        assertEq(hours, 8);
+        assertEq(hoursSpent, 8);
         
         vm.stopPrank();
     }

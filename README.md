@@ -2,6 +2,23 @@
 
 Craft version for open source communities to record the contributors's monthly detail contribution on-chain.
 
+## Project Structure
+
+```
+points-record/
+├── contracts/           # Smart contract files
+│   ├── src/            # Contract source files
+│   │   └── PointsRecord.sol  # Main contract
+│   ├── test/           # Contract test files
+│   ├── script/         # Deployment scripts
+│   └── foundry.toml    # Foundry configuration
+├── src/                # Frontend application
+│   ├── app/            # Next.js app directory
+│   ├── components/     # React components
+│   ├── config/         # Configuration files
+│   └── types/          # TypeScript type definitions
+└── ...
+```
 
 ## V0.0.1
 
