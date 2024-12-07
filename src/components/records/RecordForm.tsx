@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { ContributionType } from '@/types';
+import { useAccount, useWriteContract } from 'wagmi';
+import { CONFIG } from '@/config';
+import { POINTS_RECORD_ABI } from '@/contracts/PointsRecord';
 
 export function RecordForm() {
+  const { address } = useAccount();
   const [records, setRecords] = useState([{
     timestamp: Date.now(),
     contributionType: ContributionType.CODE,
@@ -11,13 +15,32 @@ export function RecordForm() {
     hours: 1
   }]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { writeContract, isPending, isSuccess, error } = useWriteContract();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    console.log('Form submitted:', records);
+    if (!address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    try {
+      // Submit each record to the contract
+      for (const record of records) {
+        await writeContract({
+          address: CONFIG.CONTRACT_ADDRESS as `0x${string}`,
+          abi: POINTS_RECORD_ABI,
+          functionName: 'addRecord',
+          args: [record.contributionType, record.details, record.hours],
+        });
+      }
+    } catch (err) {
+      console.error('Error submitting records:', err);
+      alert('Failed to submit records. Please try again.');
+    }
   };
 
-  const addRecord = () => {
+  const addNewRecord = () => {
     setRecords([...records, {
       timestamp: Date.now(),
       contributionType: ContributionType.CODE,
@@ -62,6 +85,7 @@ export function RecordForm() {
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               rows={3}
+              required
             />
           </div>
 
@@ -80,6 +104,7 @@ export function RecordForm() {
                 setRecords(newRecords);
               }}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              required
             />
           </div>
         </div>
@@ -88,18 +113,33 @@ export function RecordForm() {
       <div className="flex gap-4">
         <button
           type="button"
-          onClick={addRecord}
+          onClick={addNewRecord}
           className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
         >
           Add Another Record
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          disabled={isPending || !address}
+          className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
+            isPending || !address ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+          }`}
         >
-          Submit Records
+          {isPending ? 'Submitting...' : 'Submit Records'}
         </button>
       </div>
+
+      {error && (
+        <div className="text-red-500 mt-2">
+          Error: {error.message}
+        </div>
+      )}
+      
+      {isSuccess && (
+        <div className="text-green-500 mt-2">
+          Records submitted successfully!
+        </div>
+      )}
     </form>
   );
 } 
