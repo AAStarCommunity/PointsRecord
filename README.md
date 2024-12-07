@@ -91,7 +91,7 @@ Paid: 0.000000000651568428 ETH (861863 gas * 0.000000756 gwei)
 
 ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
 
-## TODO
+## TODO verfiy and refine frontend
 Start verification for (1) contracts
 Start verifying contract `0xf7833c6e5160ab6468E6CDa4672f638B4a59Cc53` deployed on optimism-sepolia
 
