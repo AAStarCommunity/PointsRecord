@@ -1,81 +1,132 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
-import {PointsRecord} from "../src/PointsRecord.sol";
+import "forge-std/Test.sol";
+import "../src/PointsRecord.sol";
 
 contract PointsRecordTest is Test {
-    PointsRecord public pointsRecord;
-    address public user1 = address(0x1);
-    address public user2 = address(0x2);
+    OptimisticPointsRecord public pointsRecord;
+    address public owner;
+    address public admin1;
+    address public member1;
+    address public member2;
 
     function setUp() public {
-        pointsRecord = new PointsRecord();
+        // 部署合约
+        pointsRecord = new OptimisticPointsRecord();
+        
+        // 创建测试账户
+        owner = address(this);
+        admin1 = makeAddr("admin1");
+        member1 = makeAddr("member1");
+        member2 = makeAddr("member2");
+
+        // 添加管理员
+        pointsRecord.addAdmin(admin1);
     }
 
-    function testSetNickname() public {
-        vm.prank(user1);
-        pointsRecord.setNickname("Alice");
-        assertEq(pointsRecord.nicknames(user1), "Alice");
+    // 测试合约部署
+    function testDeployment() public {
+        assertTrue(pointsRecord.owner() == owner);
+        assertTrue(pointsRecord.admins(owner));
     }
 
-    function testAddRecord() public {
-        vm.startPrank(user1);
-        
-        // Set nickname first
-        pointsRecord.setNickname("Alice");
-        
-        // Store current timestamp
-        uint256 currentTime = block.timestamp;
-        
-        // Add a record
-        pointsRecord.addRecord(
-            "code",
-            "https://github.com/test/pr/123",
-            8
-        );
+    // 测试添加社区成员
+    function testAddCommunityMember() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
 
-        // Get the record and verify
+        assertTrue(pointsRecord.isCommunityMember(member1));
+    }
+
+    // 测试重复添加社区成员应该失败
+    function testCannotAddExistingMember() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
+
+        vm.prank(admin1);
+        vm.expectRevert("Member already exists");
+        pointsRecord.addCommunityMember(member1);
+    }
+
+    // 测试冻结社区成员
+    function testFreezeMember() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
+
+        vm.prank(admin1);
+        pointsRecord.freezeMember(member1);
+
+        assertFalse(pointsRecord.isCommunityMember(member1));
+    }
+
+    // 测试解冻社区成员
+    function testUnfreezeMember() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
+
+        vm.prank(admin1);
+        pointsRecord.freezeMember(member1);
+
+        vm.prank(admin1);
+        pointsRecord.unfreezeMember(member1);
+
+        assertTrue(pointsRecord.isCommunityMember(member1));
+    }
+
+    // 测试非管理员不能添加成员
+    function testCannotAddMemberByNonAdmin() public {
+        vm.prank(member1);
+        vm.expectRevert("Only owner can add admins");
+        pointsRecord.addCommunityMember(member2);
+    }
+
+    // 测试冻结成员后提交记录应该失败
+    function testCannotSubmitRecordWhenFrozen() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
+
+        vm.prank(admin1);
+        pointsRecord.freezeMember(member1);
+
+        vm.prank(member1);
+        vm.expectRevert("Not a community member");
+        pointsRecord.submitRecord("测试", "详情", 5);
+    }
+
+    // 测试提交记录
+    function testSubmitRecord() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
+
+        vm.prank(member1);
+        uint256 recordId = pointsRecord.submitRecord("测试", "详情", 5);
+
+        assertEq(pointsRecord.getRecordCount(), 1);
+        
         (
+            address contributor,
             uint256 timestamp,
-            address contributorAddress,
-            string memory nickname,
+            uint8 hoursSpent,
             string memory contributionType,
             string memory details,
-            uint8 hoursSpent
-        ) = pointsRecord.records(0);
+            bool isFinalized,
+            uint256 challengePeriod
+        ) = pointsRecord.records(recordId);
 
-        assertEq(timestamp, currentTime);
-        assertEq(contributorAddress, user1);
-        assertEq(nickname, "Alice");
-        assertEq(contributionType, "code");
-        assertEq(details, "https://github.com/test/pr/123");
-        assertEq(hoursSpent, 8);
-        
-        vm.stopPrank();
+        assertEq(contributor, member1);
+        assertEq(hoursSpent, 5);
+        assertEq(contributionType, "测试");
+        assertEq(details, "详情");
     }
 
-    function testFailAddRecordWithInvalidHours() public {
-        vm.prank(user1);
-        pointsRecord.addRecord(
-            "code",
-            "test",
-            11 // More than 10 hours should fail
-        );
-    }
+    // 测试提交无效记录（小时数）
+    function testCannotSubmitInvalidRecord() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(member1);
 
-    function testGetUserRecords() public {
-        vm.startPrank(user1);
-        
-        // Add multiple records
-        pointsRecord.addRecord("code", "test1", 1);
-        pointsRecord.addRecord("design", "test2", 2);
-        
-        // Get user's record indices
-        uint256[] memory indices = pointsRecord.getUserRecordIndices(user1);
-        
-        assertEq(indices.length, 2);
-        
-        vm.stopPrank();
+        vm.prank(member1);
+        vm.expectRevert("Invalid record");
+        pointsRecord.submitRecord("测试", "详情", 0);
     }
-} 
+}
