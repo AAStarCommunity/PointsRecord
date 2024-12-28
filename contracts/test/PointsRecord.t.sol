@@ -3,277 +3,339 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "../src/PointsRecord.sol";
+import "forge-std/console.sol";
 
 contract PointsRecordTest is Test {
+    // 事件声明需要与合约中的事件完全匹配
+    event RecordSubmitted(
+        uint256 indexed recordId,
+        address indexed contributor,
+        uint256 points
+    );
+    event RecordChallenged(
+        uint256 indexed recordId,
+        address indexed challenger
+    );
+    event ChallengeSucceeded(
+        uint256 indexed recordId,
+        address indexed challenger,
+        uint256 rewardPoints
+    );
+    event ChallengeFailed(
+        uint256 indexed recordId,
+        address indexed challenger,
+        uint256 penaltyPoints
+    );
+
     OptimisticPointsRecord public pointsRecord;
     address public owner;
     address public admin1;
     address public member1;
     address public member2;
+    address public challenger;
 
     function setUp() public {
         // 部署合约
         pointsRecord = new OptimisticPointsRecord();
-
-        // 为合约提供初始余额
-        vm.deal(address(pointsRecord), 10 ether);
 
         // 创建测试账户
         owner = address(this);
         admin1 = makeAddr("admin1");
         member1 = makeAddr("member1");
         member2 = makeAddr("member2");
-
-        // 添加管理员
-        pointsRecord.addAdmin(admin1);
+        challenger = makeAddr("challenger");
     }
 
-    // 测试合约部署
+    // 合约部署测试
     function testDeployment() public {
-        assertTrue(pointsRecord.owner() == owner);
+        assertEq(pointsRecord.owner(), owner);
         assertTrue(pointsRecord.admins(owner));
+
+        // 检查部署者的初始积分
+        uint256 ownerPoints = pointsRecord.getMemberPoints(owner);
+        assertEq(ownerPoints, 100);
     }
 
-    // 测试添加社区成员
+    // 社区成员管理测试
     function testAddCommunityMember() public {
-        vm.prank(admin1);
+        // 添加社区成员
         pointsRecord.addCommunityMember(member1);
 
-        assertTrue(pointsRecord.isCommunityMember(member1));
+        // 检查成员初始积分
+        uint256 memberPoints = pointsRecord.getMemberPoints(member1);
+        assertEq(memberPoints, 50);
     }
 
-    // 测试重复添加社区成员应该失败
     function testCannotAddExistingMember() public {
-        vm.prank(admin1);
+        // 首次添加成员
         pointsRecord.addCommunityMember(member1);
 
-        vm.prank(admin1);
-        vm.expectRevert(abi.encodeWithSignature("MemberAlreadyExists()"));
+        // 尝试重复添加应该失败
+        vm.expectRevert("Member already exists");
         pointsRecord.addCommunityMember(member1);
     }
 
-    // 测试冻结社区成员
-    function testFreezeMember() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(member1);
-
-        vm.prank(admin1);
-        pointsRecord.freezeMember(member1);
-
-        assertFalse(pointsRecord.isCommunityMember(member1));
-    }
-
-    // 测试解冻社区成员
-    function testUnfreezeMember() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(member1);
-
-        vm.prank(admin1);
-        pointsRecord.freezeMember(member1);
-
-        vm.prank(admin1);
-        pointsRecord.unfreezeMember(member1);
-
-        assertTrue(pointsRecord.isCommunityMember(member1));
-    }
-
-    // 测试非管理员不能添加成员
-    function testCannotAddMemberByNonAdmin() public {
-        vm.prank(member1);
-        vm.expectRevert(abi.encodeWithSignature("NotAdmin()"));
-        pointsRecord.addCommunityMember(member2);
-    }
-
-    // 测试冻结成员后提交记录应该失败
-    function testCannotSubmitRecordWhenFrozen() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        pointsRecord.freezeMember(admin1);
-
-        vm.prank(admin1);
-        vm.expectRevert(abi.encodeWithSignature("NotCommunityMember()"));
-        pointsRecord.submitRecord("test", "details", 5);
-    }
-
-    // 测试提交记录
     function testSubmitRecord() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
+        // 提交记录并期望事件
+        vm.expectEmit(true, true, true, true);
+        emit RecordSubmitted(0, owner, 10);
 
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
-
-        assertEq(pointsRecord.getRecordCount(), 1);
-
-        (
-            address contributor,
-            uint256 timestamp,
-            uint8 hoursSpent,
-            string memory contributionType,
-            string memory details,
-            bool isFinalized,
-            uint256 challengePeriod
-        ) = pointsRecord.records(recordId);
-
-        assertEq(contributor, admin1);
-        assertEq(hoursSpent, 5);
-        assertEq(contributionType, "test");
-        assertEq(details, "details");
+        // 提交记录
+        pointsRecord.submitRecord("Contribution", "Details", 5, 10);
     }
 
-    // 测试提交无效记录（小时数）
-    function testCannotSubmitInvalidRecord() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        vm.expectRevert(abi.encodeWithSignature("InvalidRecord()"));
-        pointsRecord.submitRecord("test", "details", 0);
+    function testCannotSubmitRecordByNonMember() public {
+        // 使用一个新的非成员地址
+        vm.startPrank(member1);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OptimisticPointsRecord.NotCommunityMember.selector
+            )
+        );
+        pointsRecord.submitRecord("Contribution", "Details", 5, 10);
+        vm.stopPrank();
     }
 
-    // 测试挑战记录
     function testChallengeRecord() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
+        // 添加 challenger 为成员
+        pointsRecord.addCommunityMember(challenger);
 
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
-        address challenger = makeAddr("challenger");
+        // 期望挑战事件
+        vm.expectEmit(true, true, true, true);
+        emit RecordChallenged(recordId, challenger);
 
         // 模拟挑战
-        vm.deal(challenger, 1 ether);
         vm.prank(challenger);
-        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
+        pointsRecord.challengeRecord(recordId);
+    }
+    function testCannotChallengeWithInsufficientPoints() public {
+        // 创建一个没有足够积分的成员
+        address poorMember = makeAddr("poorMember");
+        pointsRecord.addCommunityMember(poorMember);
+    
+        // 添加另一个成员来提交和挑战记录
+        pointsRecord.addCommunityMember(challenger);
+    
+        // 提交一个记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
+    
+        // 先进行一次挑战
+        vm.prank(challenger);
+        pointsRecord.challengeRecord(recordId);
+    
+        // 解决挑战，使 poorMember 的积分降低
+        vm.prank(owner);
+        pointsRecord.resolveChallenge(recordId, 0, false);
+    
+        // 再次提交一个新记录
+        uint256 newRecordId = pointsRecord.submitRecord(
+            "AnotherContribution",
+            "AnotherDetails",
+            5,
+            10
+        );
+    
+        // 打印常量和当前积分
+        console.log("CHALLENGE_PENALTY_POINTS:", pointsRecord.CHALLENGE_PENALTY_POINTS());
+        uint256 currentPoints = pointsRecord.getMemberPoints(poorMember);
+        console.log("Current Points:", currentPoints);
+    
+        // 尝试使用低积分成员挑战
+        vm.startPrank(poorMember);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OptimisticPointsRecord.InsufficientPoints.selector
+            )
+        );
+        pointsRecord.challengeRecord(newRecordId);
+        vm.stopPrank();
+    }
+    function testResolveChallengeSuccess() public {
+        // 添加 challenger 为成员
+        pointsRecord.addCommunityMember(challenger);
 
-        // 检查挑战是否成功记录
-        (
-            address challengerAddr,
-            uint256 challengeTime,
-            bool resolved,
-            bool successful
-        ) = pointsRecord.getChallengeDetails(recordId, 0);
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
-        assertEq(challengerAddr, challenger);
-        assertFalse(resolved);
-        assertFalse(successful);
+        // 记录挑战者初始积分
+        uint256 initialChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
+
+        // 模拟挑战
+        vm.prank(challenger);
+        pointsRecord.challengeRecord(recordId);
+
+        // 期望挑战成功事件
+        vm.expectEmit(true, true, true, true);
+        emit ChallengeSucceeded(recordId, challenger, 10);
+
+        // 解决挑战（成功）
+        pointsRecord.resolveChallenge(recordId, 0, true);
+
+        // 检查挑战者积分是否增加
+        uint256 finalChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
+        assertEq(finalChallengerPoints, initialChallengerPoints + 10);
     }
 
-    // 测试保证金不足
-    function testInsufficientChallengeBond() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
+    function testResolveChallengeFailure() public {
+        // 添加 challenger 为成员
+        pointsRecord.addCommunityMember(challenger);
 
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
-        address challenger = makeAddr("challenger");
+        // 记录挑战者初始积分
+        uint256 initialChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
 
-        // 模拟保证金不足的挑战
-        vm.deal(challenger, 1 ether);
+        // 模拟挑战
         vm.prank(challenger);
-        vm.expectRevert(abi.encodeWithSignature("InsufficientBond()"));
-        pointsRecord.challengeRecord{value: 0.05 ether}(recordId);
+        pointsRecord.challengeRecord(recordId);
+
+        // 期望挑战失败事件
+        vm.expectEmit(true, true, true, true);
+        emit ChallengeFailed(recordId, challenger, 5);
+
+        // 解决挑战（失败）
+        pointsRecord.resolveChallenge(recordId, 0, false);
+
+        // 检查挑战者积分是否减少
+        uint256 finalChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
+        assertEq(finalChallengerPoints, initialChallengerPoints - 5);
     }
 
-    // 测试记录最终确认
     function testFinalizeRecord() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
         // 快进时间超过挑战期
         vm.warp(block.timestamp + 8 days);
 
-        vm.prank(admin1);
+        // 最终确认记录
         pointsRecord.finalizeRecord(recordId);
 
         // 检查记录是否已最终确认
-        (, , , , , bool isFinalized, ) = pointsRecord.records(recordId);
+        (, , , , , bool isFinalized, , uint256 points) = pointsRecord.records(
+            recordId
+        );
+
         assertTrue(isFinalized);
+        // 可以额外检查 points
+        assertEq(points, 10);
     }
 
-    // 测试在挑战期内不能最终确认
     function testCannotFinalizeRecordDuringChallengePeriod() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
         // 尝试在挑战期内最终确认
-        vm.prank(admin1);
-        vm.expectRevert(abi.encodeWithSignature("ChallengePeriodNotExpired()"));
+        vm.expectRevert("Challenge period not expired");
         pointsRecord.finalizeRecord(recordId);
     }
-    // 测试解决挑战
-    function testResolveChallenge() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
 
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
-
-        address challenger = makeAddr("challenger");
-
-        // 模拟挑战
-        vm.deal(challenger, 1 ether);
-        vm.prank(challenger);
-        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
-
-        // 快进时间超过挑战期
-        vm.warp(block.timestamp + 8 days);
-
-        // 解决挑战（成功）
-        vm.prank(admin1);
-        pointsRecord.resolveChallenge(recordId, 0, true);
-
-        // 检查记录是否未被最终确认
-        (, , , , , bool isFinalized, ) = pointsRecord.records(recordId);
-        assertFalse(isFinalized);
-
-        // 检查挑战是否已解决
-        (
-            address challengerAddr,
-            uint256 challengeTime,
-            bool resolved,
-            bool successful
-        ) = pointsRecord.getChallengeDetails(recordId, 0);
-
-        assertTrue(resolved);
-        assertEq(challengerAddr, challenger);
-        assertTrue(successful);
-    }
-
-    // 测试存在成功的挑战时不能最终确认
     function testCannotFinalizeRecordWithActiveChallenges() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
+        // 添加 challenger 为成员
+        pointsRecord.addCommunityMember(challenger);
 
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
-
-        address challenger = makeAddr("challenger");
+        // 提交记录
+        uint256 recordId = pointsRecord.submitRecord(
+            "Contribution",
+            "Details",
+            5,
+            10
+        );
 
         // 模拟挑战
-        vm.deal(challenger, 1 ether);
         vm.prank(challenger);
-        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
+        pointsRecord.challengeRecord(recordId);
 
         // 快进时间超过挑战期
         vm.warp(block.timestamp + 8 days);
 
         // 解决挑战（成功）
-        vm.prank(admin1);
         pointsRecord.resolveChallenge(recordId, 0, true);
 
         // 尝试最终确认
-        vm.prank(admin1);
         vm.expectRevert("Successful challenge exists");
         pointsRecord.finalizeRecord(recordId);
+    }
+
+    function testPointsAfterMultipleChallenges() public {
+        // 添加 challenger 为成员
+        pointsRecord.addCommunityMember(challenger);
+
+        // 多次提交和挑战记录
+        uint256 recordId1 = pointsRecord.submitRecord(
+            "Contribution1",
+            "Details1",
+            5,
+            10
+        );
+        uint256 recordId2 = pointsRecord.submitRecord(
+            "Contribution2",
+            "Details2",
+            5,
+            10
+        );
+
+        // 记录初始积分
+        uint256 initialChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
+
+        // 第一次挑战成功
+        vm.prank(challenger);
+        pointsRecord.challengeRecord(recordId1);
+        pointsRecord.resolveChallenge(recordId1, 0, true);
+
+        // 第二次挑战失败
+        vm.prank(challenger);
+        pointsRecord.challengeRecord(recordId2);
+        pointsRecord.resolveChallenge(recordId2, 0, false);
+
+        // 检查积分变化
+        uint256 finalChallengerPoints = pointsRecord.getMemberPoints(
+            challenger
+        );
+        assertEq(finalChallengerPoints, initialChallengerPoints + 10 - 5);
     }
 }

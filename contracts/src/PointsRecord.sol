@@ -11,6 +11,7 @@ contract OptimisticPointsRecord {
         string details;
         bool isFinalized;
         uint256 challengePeriod;
+        uint256 points; // 新增：记录的积分
     }
 
     // 挑战记录
@@ -26,11 +27,13 @@ contract OptimisticPointsRecord {
         bool isActive;
         bool isFrozen;
         uint256 joinedAt;
+        uint256 points; // 新增：成员积分
     }
 
     // 常量配置
     uint256 public constant CHALLENGE_PERIOD = 7 days;
-    uint256 public constant CHALLENGE_BOND = 0.1 ether;
+    uint256 public constant CHALLENGE_REWARD_POINTS = 10; // 挑战成功奖励积分
+    uint256 public constant CHALLENGE_PENALTY_POINTS = 5; // 挑战失败扣除积分
 
     // 状态变量
     Record[] public records;
@@ -42,35 +45,30 @@ contract OptimisticPointsRecord {
     // 事件
     event RecordSubmitted(
         uint256 indexed recordId,
-        address indexed contributor
+        address indexed contributor,
+        uint256 points
     );
     event RecordChallenged(
         uint256 indexed recordId,
         address indexed challenger
     );
     event RecordFinalized(uint256 indexed recordId);
-    event ChallengeFailed(uint256 indexed recordId, address indexed challenger);
+    event ChallengeFailed(
+        uint256 indexed recordId, 
+        address indexed challenger, 
+        uint256 penaltyPoints
+    );
     event ChallengeSucceeded(
         uint256 indexed recordId,
-        address indexed challenger
+        address indexed challenger,
+        uint256 rewardPoints
     );
-
-    // 社区成员事件
-    event MemberAdded(address indexed member, uint256 joinedAt);
-    event MemberFrozen(address indexed member);
-    event MemberUnfrozen(address indexed member);
 
     // 错误
     error NotAdmin();
-    error InvalidRecord();
-    error ChallengePeriodNotExpired();
-    error InsufficientBond();
-    error ChallengeAlreadyResolved();
     error NotCommunityMember();
-    error MemberAlreadyExists();
-
-    // 允许合约接收以太币
-    receive() external payable {}
+    error InsufficientPoints();
+    error InvalidRecord();
 
     // 管理员修饰符
     modifier onlyAdmins() {
@@ -81,91 +79,38 @@ contract OptimisticPointsRecord {
     constructor() {
         owner = msg.sender;
         admins[msg.sender] = true;
-
-        // 使用内部方法添加部署者为社区成员
-        _addCommunityMember(msg.sender);
-    }
-
-    // 添加管理员
-    function addAdmin(address _newAdmin) external {
-        require(msg.sender == owner, "Only owner can add admins");
-        admins[_newAdmin] = true;
+        
+        // 为部署者添加初始积分
+        communityMembers[msg.sender] = CommunityMember({
+            isActive: true,
+            isFrozen: false,
+            joinedAt: block.timestamp,
+            points: 100 // 初始积分
+        });
     }
 
     // 添加社区成员（仅管理员）
-    function addCommunityMember(address _newMember) external {
-        // 检查调用者是否为管理员
-        if (!admins[msg.sender]) {
-            revert NotAdmin();
-        }
-
-        // 检查成员是否已存在
-        if (communityMembers[_newMember].isActive) {
-            revert MemberAlreadyExists();
-        }
-
+    function addCommunityMember(address _newMember) external onlyAdmins {
+        require(!communityMembers[_newMember].isActive, "Member already exists");
+        
         communityMembers[_newMember] = CommunityMember({
             isActive: true,
             isFrozen: false,
-            joinedAt: block.timestamp
+            joinedAt: block.timestamp,
+            points: 50 // 初始积分
         });
-
-        emit MemberAdded(_newMember, block.timestamp);
-    }
-
-    // 内部添加社区成员方法
-    function _addCommunityMember(address _newMember) internal {
-        // 检查成员是否已存在
-        if (communityMembers[_newMember].isActive) {
-            revert MemberAlreadyExists();
-        }
-
-        communityMembers[_newMember] = CommunityMember({
-            isActive: true,
-            isFrozen: false,
-            joinedAt: block.timestamp
-        });
-
-        emit MemberAdded(_newMember, block.timestamp);
-    }
-
-    // 冻结社区成员
-    function freezeMember(address _member) external onlyAdmins {
-        CommunityMember storage member = communityMembers[_member];
-        if (!member.isActive) {
-            revert("Member does not exist");
-        }
-        if (member.isFrozen) {
-            revert("Member already frozen");
-        }
-
-        member.isFrozen = true;
-        emit MemberFrozen(_member);
-    }
-
-    // 解冻社区成员
-    function unfreezeMember(address _member) external onlyAdmins {
-        CommunityMember storage member = communityMembers[_member];
-        require(member.isActive, "Member does not exist");
-
-        member.isFrozen = false;
-        emit MemberUnfrozen(_member);
     }
 
     // 提交记录（仅社区成员）
     function submitRecord(
         string memory _contributionType,
         string memory _details,
-        uint8 _hoursSpent
+        uint8 _hoursSpent,
+        uint256 _points
     ) external returns (uint256) {
-        // 检查调用者是否为管理员
-        if (!admins[msg.sender]) {
-            revert NotAdmin();
-        }
-
-        // 检查调用者是否为社区成员
+        // 检查调用者是否为管理员或活跃社区成员
         CommunityMember storage member = communityMembers[msg.sender];
-        if (!member.isActive || member.isFrozen) {
+        if (!admins[msg.sender] && (!member.isActive || member.isFrozen)) {
             revert NotCommunityMember();
         }
 
@@ -181,29 +126,36 @@ contract OptimisticPointsRecord {
             contributionType: _contributionType,
             details: _details,
             isFinalized: false,
-            challengePeriod: block.timestamp + CHALLENGE_PERIOD
+            challengePeriod: block.timestamp + CHALLENGE_PERIOD,
+            points: _points
         });
 
         records.push(newRecord);
         uint256 recordId = records.length - 1;
 
-        emit RecordSubmitted(recordId, msg.sender);
+        emit RecordSubmitted(recordId, msg.sender, _points);
         return recordId;
     }
 
     // 挑战记录
-    function challengeRecord(uint256 _recordId) external payable {
-        // 检查保证金
-        if (msg.value < CHALLENGE_BOND) {
-            revert InsufficientBond();
+    function challengeRecord(uint256 _recordId) external {
+        CommunityMember storage challenger = communityMembers[msg.sender];
+        
+        // 管理员可以无条件挑战
+        if (!admins[msg.sender]) {
+            // 非管理员需要有足够积分
+            if (!challenger.isActive || challenger.isFrozen) {
+                revert NotCommunityMember();
+            }
+            if (challenger.points < CHALLENGE_PENALTY_POINTS) {
+                revert InsufficientPoints();
+            }
         }
 
         Record storage record = records[_recordId];
 
         // 检查是否在挑战期内
-        if (block.timestamp > record.challengePeriod) {
-            revert ChallengePeriodNotExpired();
-        }
+        require(block.timestamp <= record.challengePeriod, "Challenge period expired");
 
         // 记录挑战
         Challenge memory newChallenge = Challenge({
@@ -224,51 +176,49 @@ contract OptimisticPointsRecord {
         uint256 _challengeIndex,
         bool _challengeAccepted
     ) external onlyAdmins {
-        // 确保挑战索引有效
-        require(
-            _challengeIndex < recordChallenges[_recordId].length,
-            "Invalid challenge index"
-        );
-
-        Challenge storage challenge = recordChallenges[_recordId][
-            _challengeIndex
-        ];
+        Challenge storage challenge = recordChallenges[_recordId][_challengeIndex];
+        Record storage record = records[_recordId];
+        CommunityMember storage challenger = communityMembers[challenge.challenger];
 
         // 检查挑战是否已解决
-        if (challenge.resolved) {
-            revert ChallengeAlreadyResolved();
-        }
+        require(!challenge.resolved, "Challenge already resolved");
 
         // 标记挑战已解决
         challenge.resolved = true;
 
         if (_challengeAccepted) {
-            // 挑战成功：返还保证金 + 额外奖励
+            // 挑战成功
             challenge.successful = true;
+            
+            // 给挑战者奖励积分（如果是社区成员）
+            if (challenger.isActive && !challenger.isFrozen) {
+                challenger.points += CHALLENGE_REWARD_POINTS;
+            }
 
-            // 确保有足够余额
-            require(
-                address(this).balance >= CHALLENGE_BOND * 2,
-                "Insufficient contract balance"
+            // 标记记录为未最终确认
+            record.isFinalized = false;
+
+            emit ChallengeSucceeded(
+                _recordId, 
+                challenge.challenger, 
+                CHALLENGE_REWARD_POINTS
             );
-            payable(challenge.challenger).transfer(CHALLENGE_BOND * 2);
-
-            // 明确标记记录为未最终确认
-            records[_recordId].isFinalized = false;
-
-            emit ChallengeSucceeded(_recordId, challenge.challenger);
         } else {
-            // 挑战失败：没收保证金，返还给合约拥有者或管理员
+            // 挑战失败
             challenge.successful = false;
+            
+            // 扣除挑战者积分（如果是社区成员）
+            if (challenger.isActive && !challenger.isFrozen) {
+                challenger.points = challenger.points > CHALLENGE_PENALTY_POINTS 
+                    ? challenger.points - CHALLENGE_PENALTY_POINTS 
+                    : 0;
+            }
 
-            // 确保有足够余额
-            require(
-                address(this).balance >= CHALLENGE_BOND,
-                "Insufficient contract balance"
+            emit ChallengeFailed(
+                _recordId, 
+                challenge.challenger, 
+                CHALLENGE_PENALTY_POINTS
             );
-            payable(owner).transfer(CHALLENGE_BOND);
-
-            emit ChallengeFailed(_recordId, challenge.challenger);
         }
     }
 
@@ -277,14 +227,11 @@ contract OptimisticPointsRecord {
         Record storage record = records[_recordId];
 
         // 检查是否超过挑战期
-        if (block.timestamp <= record.challengePeriod) {
-            revert ChallengePeriodNotExpired();
-        }
+        require(block.timestamp > record.challengePeriod, "Challenge period not expired");
 
         // 检查是否有成功的挑战
         Challenge[] storage challenges = recordChallenges[_recordId];
         for (uint256 i = 0; i < challenges.length; i++) {
-            // 明确检查已解决且成功的挑战
             if (challenges[i].resolved && challenges[i].successful) {
                 revert("Successful challenge exists");
             }
@@ -296,37 +243,8 @@ contract OptimisticPointsRecord {
         emit RecordFinalized(_recordId);
     }
 
-    // 获取挑战详情
-    function getChallengeDetails(
-        uint256 _recordId,
-        uint256 _index
-    )
-        external
-        view
-        returns (
-            address challenger,
-            uint256 challengeTime,
-            bool resolved,
-            bool successful
-        )
-    {
-        Challenge storage challenge = recordChallenges[_recordId][_index];
-        return (
-            challenge.challenger,
-            challenge.challengeTime,
-            challenge.resolved,
-            challenge.successful
-        );
-    }
-
-    // 查询是否为活跃社区成员
-    function isCommunityMember(address _member) external view returns (bool) {
-        CommunityMember storage member = communityMembers[_member];
-        return member.isActive && !member.isFrozen;
-    }
-
-    // 获取记录数量
-    function getRecordCount() external view returns (uint256) {
-        return records.length;
+    // 获取成员积分
+    function getMemberPoints(address _member) external view returns (uint256) {
+        return communityMembers[_member].points;
     }
 }
