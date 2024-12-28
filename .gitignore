@@ -4,7 +4,6 @@
 /contracts/cache/
 /contracts/out/
 /contracts/broadcast/
-/contracts/lib/
 
 # dependencies
 /node_modules
