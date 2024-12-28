@@ -69,6 +69,9 @@ contract OptimisticPointsRecord {
     error NotCommunityMember();
     error MemberAlreadyExists();
 
+    // 允许合约接收以太币
+    receive() external payable {}
+
     // 管理员修饰符
     modifier onlyAdmins() {
         if (!admins[msg.sender]) revert NotAdmin();
@@ -219,8 +222,14 @@ contract OptimisticPointsRecord {
     function resolveChallenge(
         uint256 _recordId,
         uint256 _challengeIndex,
-        bool _challengeAccepted // 新增参数：管理员是否接受挑战
+        bool _challengeAccepted
     ) external onlyAdmins {
+        // 确保挑战索引有效
+        require(
+            _challengeIndex < recordChallenges[_recordId].length,
+            "Invalid challenge index"
+        );
+
         Challenge storage challenge = recordChallenges[_recordId][
             _challengeIndex
         ];
@@ -236,15 +245,27 @@ contract OptimisticPointsRecord {
         if (_challengeAccepted) {
             // 挑战成功：返还保证金 + 额外奖励
             challenge.successful = true;
+
+            // 确保有足够余额
+            require(
+                address(this).balance >= CHALLENGE_BOND * 2,
+                "Insufficient contract balance"
+            );
             payable(challenge.challenger).transfer(CHALLENGE_BOND * 2);
 
-            // 可以在这里添加其他处理逻辑，如标记记录为无效
+            // 明确标记记录为未最终确认
             records[_recordId].isFinalized = false;
 
             emit ChallengeSucceeded(_recordId, challenge.challenger);
         } else {
             // 挑战失败：没收保证金，返还给合约拥有者或管理员
             challenge.successful = false;
+
+            // 确保有足够余额
+            require(
+                address(this).balance >= CHALLENGE_BOND,
+                "Insufficient contract balance"
+            );
             payable(owner).transfer(CHALLENGE_BOND);
 
             emit ChallengeFailed(_recordId, challenge.challenger);
@@ -263,7 +284,8 @@ contract OptimisticPointsRecord {
         // 检查是否有成功的挑战
         Challenge[] storage challenges = recordChallenges[_recordId];
         for (uint256 i = 0; i < challenges.length; i++) {
-            if (challenges[i].successful) {
+            // 明确检查已解决且成功的挑战
+            if (challenges[i].resolved && challenges[i].successful) {
                 revert("Successful challenge exists");
             }
         }
@@ -272,24 +294,6 @@ contract OptimisticPointsRecord {
         record.isFinalized = true;
 
         emit RecordFinalized(_recordId);
-    }
-
-    // 在 PointsRecord.sol 中添加
-    function getRecordChallenges(
-        uint256 _recordId
-    ) external view returns (Challenge[] memory) {
-        return recordChallenges[_recordId];
-    }
-
-    // 查询是否为活跃社区成员
-    function isCommunityMember(address _member) external view returns (bool) {
-        CommunityMember storage member = communityMembers[_member];
-        return member.isActive && !member.isFrozen;
-    }
-
-    // 获取记录数量
-    function getRecordCount() external view returns (uint256) {
-        return records.length;
     }
 
     // 获取挑战详情
@@ -313,5 +317,16 @@ contract OptimisticPointsRecord {
             challenge.resolved,
             challenge.successful
         );
+    }
+
+    // 查询是否为活跃社区成员
+    function isCommunityMember(address _member) external view returns (bool) {
+        CommunityMember storage member = communityMembers[_member];
+        return member.isActive && !member.isFrozen;
+    }
+
+    // 获取记录数量
+    function getRecordCount() external view returns (uint256) {
+        return records.length;
     }
 }

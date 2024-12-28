@@ -15,6 +15,9 @@ contract PointsRecordTest is Test {
         // 部署合约
         pointsRecord = new OptimisticPointsRecord();
 
+        // 为合约提供初始余额
+        vm.deal(address(pointsRecord), 10 ether);
+
         // 创建测试账户
         owner = address(this);
         admin1 = makeAddr("admin1");
@@ -130,6 +133,34 @@ contract PointsRecordTest is Test {
         pointsRecord.submitRecord("test", "details", 0);
     }
 
+    // 测试挑战记录
+    function testChallengeRecord() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(admin1);
+
+        vm.prank(admin1);
+        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+
+        address challenger = makeAddr("challenger");
+
+        // 模拟挑战
+        vm.deal(challenger, 1 ether);
+        vm.prank(challenger);
+        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
+
+        // 检查挑战是否成功记录
+        (
+            address challengerAddr,
+            uint256 challengeTime,
+            bool resolved,
+            bool successful
+        ) = pointsRecord.getChallengeDetails(recordId, 0);
+
+        assertEq(challengerAddr, challenger);
+        assertFalse(resolved);
+        assertFalse(successful);
+    }
+
     // 测试保证金不足
     function testInsufficientChallengeBond() public {
         vm.prank(admin1);
@@ -179,6 +210,44 @@ contract PointsRecordTest is Test {
         vm.expectRevert(abi.encodeWithSignature("ChallengePeriodNotExpired()"));
         pointsRecord.finalizeRecord(recordId);
     }
+    // 测试解决挑战
+    function testResolveChallenge() public {
+        vm.prank(admin1);
+        pointsRecord.addCommunityMember(admin1);
+
+        vm.prank(admin1);
+        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
+
+        address challenger = makeAddr("challenger");
+
+        // 模拟挑战
+        vm.deal(challenger, 1 ether);
+        vm.prank(challenger);
+        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
+
+        // 快进时间超过挑战期
+        vm.warp(block.timestamp + 8 days);
+
+        // 解决挑战（成功）
+        vm.prank(admin1);
+        pointsRecord.resolveChallenge(recordId, 0, true);
+
+        // 检查记录是否未被最终确认
+        (, , , , , bool isFinalized, ) = pointsRecord.records(recordId);
+        assertFalse(isFinalized);
+
+        // 检查挑战是否已解决
+        (
+            address challengerAddr,
+            uint256 challengeTime,
+            bool resolved,
+            bool successful
+        ) = pointsRecord.getChallengeDetails(recordId, 0);
+
+        assertTrue(resolved);
+        assertEq(challengerAddr, challenger);
+        assertTrue(successful);
+    }
 
     // 测试存在成功的挑战时不能最终确认
     function testCannotFinalizeRecordWithActiveChallenges() public {
@@ -206,69 +275,5 @@ contract PointsRecordTest is Test {
         vm.prank(admin1);
         vm.expectRevert("Successful challenge exists");
         pointsRecord.finalizeRecord(recordId);
-    }
-
-    // 测试解决挑战
-    function testResolveChallenge() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
-
-        address challenger = makeAddr("challenger");
-
-        // 模拟挑战
-        vm.deal(challenger, 1 ether);
-        vm.prank(challenger);
-        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
-
-        // 解决挑战（成功）
-        vm.prank(admin1);
-        pointsRecord.resolveChallenge(recordId, 0, true);
-
-        // 检查记录是否未被最终确认
-        (, , , , , bool isFinalized, ) = pointsRecord.records(recordId);
-        assertFalse(isFinalized);
-
-        // 检查挑战是否已解决
-        (
-            address challengerAddr,
-            uint256 challengeTime,
-            bool resolved,
-            bool successful
-        ) = pointsRecord.getChallengeDetails(recordId, 0);
-
-        assertTrue(resolved);
-        assertEq(challengerAddr, challenger);
-        assertTrue(successful);
-    }
-
-    // 测试挑战记录
-    function testChallengeRecord() public {
-        vm.prank(admin1);
-        pointsRecord.addCommunityMember(admin1);
-
-        vm.prank(admin1);
-        uint256 recordId = pointsRecord.submitRecord("test", "details", 5);
-
-        address challenger = makeAddr("challenger");
-
-        // 模拟挑战
-        vm.deal(challenger, 1 ether);
-        vm.prank(challenger);
-        pointsRecord.challengeRecord{value: 0.1 ether}(recordId);
-
-        // 检查挑战是否成功记录
-        (
-            address challengerAddr,
-            uint256 challengeTime,
-            bool resolved,
-            bool successful
-        ) = pointsRecord.getChallengeDetails(recordId, 0);
-
-        assertEq(challengerAddr, challenger);
-        assertFalse(resolved);
-        assertFalse(successful);
     }
 }
