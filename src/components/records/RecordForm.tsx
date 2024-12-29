@@ -2,9 +2,21 @@
 
 import { useState } from 'react';
 import { ContributionType } from '@/types';
-import { useAccount, usePrepareContractWrite, useContractWrite } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { CONFIG } from '@/config';
 import { POINTS_RECORD_ABI } from '@/contracts/PointsRecord';
+
+// 映射 ContributionType 到 WorkType
+const mapContributionToWorkType = (type: ContributionType) => {
+  switch (type) {
+    case ContributionType.CODE: return 2; // WorkType.Code
+    case ContributionType.DOC: return 0; // WorkType.Document
+    case ContributionType.DESIGN: return 1; // WorkType.Community
+    case ContributionType.OPERATION: return 1; // WorkType.Community
+    case ContributionType.OTHER: return 1; // WorkType.Community
+    default: return 1;
+  }
+};
 
 export function RecordForm() {
   const { address } = useAccount();
@@ -15,36 +27,42 @@ export function RecordForm() {
     hours: 1
   }]);
 
-  const { config } = usePrepareContractWrite({
-    address: CONFIG.CONTRACT_ADDRESS as `0x${string}`,
-    abi: POINTS_RECORD_ABI,
-    functionName: 'addRecord',
-    args: [records[0].contributionType, records[0].details, records[0].hours],
-    enabled: !!address && records[0].details.length > 0,
-  })
+  const { 
+    writeContract, 
+    isPending, 
+    error: writeError 
+  } = useWriteContract();
 
-  const { write: addRecord, isLoading, isSuccess, error } = useContractWrite(config)
+  const { 
+    isLoading: isConfirming, 
+    isSuccess: isConfirmed, 
+    error: confirmError 
+  } = useWaitForTransactionReceipt();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    if (!addRecord) {
-      alert('Write function not ready');
+      alert('请先连接钱包');
       return;
     }
 
     try {
-      // Submit each record to the contract
+      // 提交每条记录到合约
       for (const record of records) {
-        await addRecord();
+        writeContract({
+          address: CONFIG.CONTRACT_ADDRESS as `0x${string}`,
+          abi: POINTS_RECORD_ABI,
+          functionName: 'submitWorkRecord',
+          args: [
+            record.hours as number, 
+            mapContributionToWorkType(record.contributionType), 
+            record.details
+          ]
+        });
       }
     } catch (err) {
-      console.error('Error submitting records:', err);
-      alert('Failed to submit records. Please try again.');
+      console.error('提交记录时出错:', err);
+      alert('提交记录失败，请重试');
     }
   };
 
@@ -63,7 +81,7 @@ export function RecordForm() {
         <div key={index} className="p-4 border rounded-lg space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Contribution Type
+              贡献类型
             </label>
             <select
               value={record.contributionType}
@@ -82,7 +100,7 @@ export function RecordForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Details
+              详细描述
             </label>
             <textarea
               value={record.details}
@@ -99,7 +117,7 @@ export function RecordForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Hours
+              工作小时数
             </label>
             <input
               type="number"
@@ -124,30 +142,30 @@ export function RecordForm() {
           onClick={addNewRecord}
           className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
         >
-          Add Another Record
+          添加另一条记录
         </button>
         <button
           type="submit"
-          disabled={isLoading || !address}
+          disabled={isPending || !address}
           className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
-            isLoading || !address ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+            isPending || !address ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
           }`}
         >
-          {isLoading ? 'Submitting...' : 'Submit Records'}
+          {isPending ? '提交中...' : '提交记录'}
         </button>
       </div>
 
-      {error && (
+      {(writeError || confirmError) && (
         <div className="text-red-500 mt-2">
-          Error: {error.message}
+          错误: {(writeError || confirmError)?.message}
         </div>
       )}
       
-      {isSuccess && (
+      {isConfirmed && (
         <div className="text-green-500 mt-2">
-          Records submitted successfully!
+          记录提交成功！
         </div>
       )}
     </form>
   );
-} 
+}

@@ -6,8 +6,8 @@ import { WagmiProvider } from '@/components/providers/WagmiProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Points Record',
-  description: 'Record contributors monthly contributions on-chain',
+  title: '社区贡献记录',
+  description: '在链上记录社区成员的月度贡献',
 }
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className={inter.className}>
         <WagmiProvider>
           {children}
@@ -24,4 +24,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-} 
+}

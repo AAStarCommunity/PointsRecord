@@ -37,6 +37,7 @@ contract CommunityPointsRecordTest is Test {
         (bool exists, bool isActive, bool isFrozen, uint256 totalHours) = workRecord
             .communityMembers(member1);
 
+        assertTrue(exists, "Member should exists");
         assertTrue(isActive, "Member should be active");
         assertFalse(isFrozen, "Member should not be frozen");
         assertEq(totalHours, 0, "Initial hours should be zero");

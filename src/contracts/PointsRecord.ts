@@ -1,768 +1,451 @@
 export const POINTS_RECORD_ABI = [
-  {
-      "type": "function",
-      "name": "IS_TEST",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "bool",
-              "internalType": "bool"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "admin2",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "address",
-              "internalType": "address"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "excludeArtifacts",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "excludedArtifacts_",
-              "type": "string[]",
-              "internalType": "string[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "excludeContracts",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "excludedContracts_",
-              "type": "address[]",
-              "internalType": "address[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "excludeSelectors",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "excludedSelectors_",
-              "type": "tuple[]",
-              "internalType": "struct StdInvariant.FuzzSelector[]",
-              "components": [
-                  {
-                      "name": "addr",
-                      "type": "address",
-                      "internalType": "address"
-                  },
-                  {
-                      "name": "selectors",
-                      "type": "bytes4[]",
-                      "internalType": "bytes4[]"
-                  }
-              ]
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "excludeSenders",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "excludedSenders_",
-              "type": "address[]",
-              "internalType": "address[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "failed",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "bool",
-              "internalType": "bool"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "member1",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "address",
-              "internalType": "address"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "member2",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "address",
-              "internalType": "address"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "owner",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "address",
-              "internalType": "address"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "setUp",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "targetArtifactSelectors",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedArtifactSelectors_",
-              "type": "tuple[]",
-              "internalType": "struct StdInvariant.FuzzArtifactSelector[]",
-              "components": [
-                  {
-                      "name": "artifact",
-                      "type": "string",
-                      "internalType": "string"
-                  },
-                  {
-                      "name": "selectors",
-                      "type": "bytes4[]",
-                      "internalType": "bytes4[]"
-                  }
-              ]
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "targetArtifacts",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedArtifacts_",
-              "type": "string[]",
-              "internalType": "string[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "targetContracts",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedContracts_",
-              "type": "address[]",
-              "internalType": "address[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "targetInterfaces",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedInterfaces_",
-              "type": "tuple[]",
-              "internalType": "struct StdInvariant.FuzzInterface[]",
-              "components": [
-                  {
-                      "name": "addr",
-                      "type": "address",
-                      "internalType": "address"
-                  },
-                  {
-                      "name": "artifacts",
-                      "type": "string[]",
-                      "internalType": "string[]"
-                  }
-              ]
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "targetSelectors",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedSelectors_",
-              "type": "tuple[]",
-              "internalType": "struct StdInvariant.FuzzSelector[]",
-              "components": [
-                  {
-                      "name": "addr",
-                      "type": "address",
-                      "internalType": "address"
-                  },
-                  {
-                      "name": "selectors",
-                      "type": "bytes4[]",
-                      "internalType": "bytes4[]"
-                  }
-              ]
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "targetSenders",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "targetedSenders_",
-              "type": "address[]",
-              "internalType": "address[]"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "function",
-      "name": "testAddAdmin",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testAddAdminAutoAddAsMember",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testAddCommunityMember",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotAddExistingMember",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotAddZeroAddressAdmin",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotChallengeAlreadyChallengedRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotChallengeSelfRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotFinalizeChallendgedRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotFinalizeRecordDuringChallengePeriod",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotFinalizeTwice",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testCannotSubmitInvalidHours",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testChallengeWorkRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testFinalizeRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testFreezeMember",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testGetPendingRecords",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testGetPendingRecordsEmpty",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testResolveChallenge",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "testSubmitWorkRecord",
-      "inputs": [],
-      "outputs": [],
-      "stateMutability": "nonpayable"
-  },
-  {
-      "type": "function",
-      "name": "workRecord",
-      "inputs": [],
-      "outputs": [
-          {
-              "name": "",
-              "type": "address",
-              "internalType": "contract CommunityPointsRecord"
-          }
-      ],
-      "stateMutability": "view"
-  },
-  {
-      "type": "event",
-      "name": "log",
-      "inputs": [
-          {
-              "name": "",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_address",
-      "inputs": [
-          {
-              "name": "",
-              "type": "address",
-              "indexed": false,
-              "internalType": "address"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_array",
-      "inputs": [
-          {
-              "name": "val",
-              "type": "uint256[]",
-              "indexed": false,
-              "internalType": "uint256[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_array",
-      "inputs": [
-          {
-              "name": "val",
-              "type": "int256[]",
-              "indexed": false,
-              "internalType": "int256[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_array",
-      "inputs": [
-          {
-              "name": "val",
-              "type": "address[]",
-              "indexed": false,
-              "internalType": "address[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_bytes",
-      "inputs": [
-          {
-              "name": "",
-              "type": "bytes",
-              "indexed": false,
-              "internalType": "bytes"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_bytes32",
-      "inputs": [
-          {
-              "name": "",
-              "type": "bytes32",
-              "indexed": false,
-              "internalType": "bytes32"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_int",
-      "inputs": [
-          {
-              "name": "",
-              "type": "int256",
-              "indexed": false,
-              "internalType": "int256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_address",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "address",
-              "indexed": false,
-              "internalType": "address"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_array",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "uint256[]",
-              "indexed": false,
-              "internalType": "uint256[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_array",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "int256[]",
-              "indexed": false,
-              "internalType": "int256[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_array",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "address[]",
-              "indexed": false,
-              "internalType": "address[]"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_bytes",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "bytes",
-              "indexed": false,
-              "internalType": "bytes"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_bytes32",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "bytes32",
-              "indexed": false,
-              "internalType": "bytes32"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_decimal_int",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "int256",
-              "indexed": false,
-              "internalType": "int256"
-          },
-          {
-              "name": "decimals",
-              "type": "uint256",
-              "indexed": false,
-              "internalType": "uint256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_decimal_uint",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "uint256",
-              "indexed": false,
-              "internalType": "uint256"
-          },
-          {
-              "name": "decimals",
-              "type": "uint256",
-              "indexed": false,
-              "internalType": "uint256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_int",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "int256",
-              "indexed": false,
-              "internalType": "int256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_string",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_named_uint",
-      "inputs": [
-          {
-              "name": "key",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          },
-          {
-              "name": "val",
-              "type": "uint256",
-              "indexed": false,
-              "internalType": "uint256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_string",
-      "inputs": [
-          {
-              "name": "",
-              "type": "string",
-              "indexed": false,
-              "internalType": "string"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "log_uint",
-      "inputs": [
-          {
-              "name": "",
-              "type": "uint256",
-              "indexed": false,
-              "internalType": "uint256"
-          }
-      ],
-      "anonymous": false
-  },
-  {
-      "type": "event",
-      "name": "logs",
-      "inputs": [
-          {
-              "name": "",
-              "type": "bytes",
-              "indexed": false,
-              "internalType": "bytes"
-          }
-      ],
-      "anonymous": false
-  }
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "AdminAlreadyExists",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AlreadyChallenged",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CannotChallengeSelfRecord",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ChallengePeriodNotExpired",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidWorkRecord",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotActiveMember",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotAdmin",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotOwner",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "admin",
+                "type": "address"
+            }
+        ],
+        "name": "AdminAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "member",
+                "type": "address"
+            }
+        ],
+        "name": "MemberAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "member",
+                "type": "address"
+            }
+        ],
+        "name": "MemberFrozen",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "recordId",
+                "type": "uint256"
+            }
+        ],
+        "name": "WorkRecordAutoFinalized",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "recordId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "challenger",
+                "type": "address"
+            }
+        ],
+        "name": "WorkRecordChallenged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "recordId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "successful",
+                "type": "bool"
+            }
+        ],
+        "name": "WorkRecordResolved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "recordId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "contributor",
+                "type": "address"
+            }
+        ],
+        "name": "WorkRecordSubmitted",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "CHALLENGE_PERIOD",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_admin",
+                "type": "address"
+            }
+        ],
+        "name": "addAdmin",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_member",
+                "type": "address"
+            }
+        ],
+        "name": "addCommunityMember",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "admins",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_recordId",
+                "type": "uint256"
+            }
+        ],
+        "name": "challengeWorkRecord",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "communityMembers",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "exists",
+                "type": "bool"
+            },
+            {
+                "internalType": "bool",
+                "name": "isActive",
+                "type": "bool"
+            },
+            {
+                "internalType": "bool",
+                "name": "isFrozen",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "totalHoursValidated",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "communityMembersCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_recordId",
+                "type": "uint256"
+            }
+        ],
+        "name": "finalizeRecord",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_member",
+                "type": "address"
+            }
+        ],
+        "name": "freezeMember",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_member",
+                "type": "address"
+            }
+        ],
+        "name": "getMemberTotalHours",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getPendingRecords",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_recordId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "_challengeAccepted",
+                "type": "bool"
+            }
+        ],
+        "name": "resolveChallenge",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_hoursSpent",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum CommunityPointsRecord.WorkType",
+                "name": "_workType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "string",
+                "name": "_proof",
+                "type": "string"
+            }
+        ],
+        "name": "submitWorkRecord",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "workRecords",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "contributor",
+                "type": "address"
+            },
+            {
+                "internalType": "uint8",
+                "name": "hoursSpent",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum CommunityPointsRecord.WorkType",
+                "name": "workType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "string",
+                "name": "proof",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "submissionTime",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "challengePeriod",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "isFinalized",
+                "type": "bool"
+            },
+            {
+                "internalType": "bool",
+                "name": "isChallenged",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
 ] as const; 
