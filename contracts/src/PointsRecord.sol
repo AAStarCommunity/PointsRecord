@@ -35,7 +35,7 @@ contract CommunityPointsRecord {
     WorkRecord[] public workRecords;
 
     // 常量
-    uint256 public constant CHALLENGE_PERIOD = 0 days;
+    uint256 public constant CHALLENGE_PERIOD = 14 days;
 
     // 事件
     event MemberAdded(address indexed member);
@@ -98,9 +98,13 @@ contract CommunityPointsRecord {
 
         // 直接设置管理员和社区成员
         admins[msg.sender] = true;
+        communityMembers[msg.sender] = CommunityMember({
+            exists: true,
+            isActive: true,
+            isFrozen: false,
+            totalHoursValidated: 0
+        });
         communityMembersCount++;
-
-        // 触发事件
         emit AdminAdded(msg.sender);
         emit MemberAdded(msg.sender);
     }
