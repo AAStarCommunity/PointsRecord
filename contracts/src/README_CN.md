@@ -160,3 +160,10 @@ CommunityWorkRecord 是一个去中心化的社区工作记录管理智能合约
 - 参数:
   - `recordId`: 工作记录的ID
   - `successful`: 挑战是否成功
+
+### `WorkRecordAutoFinalized(uint256 indexed recordId)`
+
+当工作记录自动最终确认时触发。
+
+- 参数:
+  - `recordId`: 工作记录的ID

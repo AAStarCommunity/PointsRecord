@@ -4,27 +4,27 @@ pragma solidity ^0.8.19;
 contract CommunityWorkRecord {
     // 工作记录结构
     struct WorkRecord {
-        address contributor;      // 贡献者
-        uint8 hoursSpent;         // 工时
-        WorkType workType;        // 工作类型
-        string proof;             // 证明材料
-        uint256 submissionTime;   // 提交时间
-        uint256 challengePeriod;  // 挑战期限
-        bool isFinalized;         // 是否已最终确认
-        bool isChallenged;        // 是否已被挑战
+        address contributor; // 贡献者
+        uint8 hoursSpent; // 工时
+        WorkType workType; // 工作类型
+        string proof; // 证明材料
+        uint256 submissionTime; // 提交时间
+        uint256 challengePeriod; // 挑战期限
+        bool isFinalized; // 是否已最终确认
+        bool isChallenged; // 是否已被挑战
     }
 
     // 工作类型枚举
     enum WorkType {
-        Document,   // 文档
-        Community,  // 社区
-        Code        // 代码
+        Document, // 文档
+        Community, // 社区
+        Code // 代码
     }
 
     // 社区成员结构
     struct CommunityMember {
-        bool isActive;             // 是否为活跃成员
-        bool isFrozen;             // 是否被冻结
+        bool isActive; // 是否为活跃成员
+        bool isFrozen; // 是否被冻结
         uint256 totalHoursValidated; // 总有效工时
     }
 
@@ -32,16 +32,23 @@ contract CommunityWorkRecord {
     mapping(address => CommunityMember) public communityMembers;
     mapping(address => bool) public admins;
     WorkRecord[] public workRecords;
-    
+
     // 常量
     uint256 public constant CHALLENGE_PERIOD = 14 days;
 
     // 事件
     event MemberAdded(address indexed member);
     event MemberFrozen(address indexed member);
-    event WorkRecordSubmitted(uint256 indexed recordId, address indexed contributor);
-    event WorkRecordChallenged(uint256 indexed recordId, address indexed challenger);
+    event WorkRecordSubmitted(
+        uint256 indexed recordId,
+        address indexed contributor
+    );
+    event WorkRecordChallenged(
+        uint256 indexed recordId,
+        address indexed challenger
+    );
     event WorkRecordResolved(uint256 indexed recordId, bool successful);
+    event WorkRecordAutoFinalized(uint256 indexed recordId);
 
     // 错误
     error NotAdmin();
@@ -58,8 +65,10 @@ contract CommunityWorkRecord {
 
     // 活跃成员修饰符
     modifier onlyActiveMember() {
-        if (!communityMembers[msg.sender].isActive || 
-            communityMembers[msg.sender].isFrozen) revert NotActiveMember();
+        if (
+            !communityMembers[msg.sender].isActive ||
+            communityMembers[msg.sender].isFrozen
+        ) revert NotActiveMember();
         _;
     }
 
@@ -76,7 +85,7 @@ contract CommunityWorkRecord {
     // 添加社区成员
     function addCommunityMember(address _member) external onlyAdmins {
         require(!communityMembers[_member].isActive, "Member already exists");
-        
+
         communityMembers[_member] = CommunityMember({
             isActive: true,
             isFrozen: false,
@@ -96,8 +105,8 @@ contract CommunityWorkRecord {
 
     // 提交工作记录
     function submitWorkRecord(
-        uint8 _hoursSpent, 
-        WorkType _workType, 
+        uint8 _hoursSpent,
+        WorkType _workType,
         string memory _proof
     ) external onlyActiveMember returns (uint256) {
         // 验证工时
@@ -144,7 +153,7 @@ contract CommunityWorkRecord {
 
     // 解决挑战
     function resolveChallenge(
-        uint256 _recordId, 
+        uint256 _recordId,
         bool _challengeAccepted
     ) external onlyAdmins {
         WorkRecord storage record = workRecords[_recordId];
@@ -159,14 +168,58 @@ contract CommunityWorkRecord {
         } else {
             // 挑战失败，确认工作记录
             record.isFinalized = true;
-            communityMembers[record.contributor].totalHoursValidated += record.hoursSpent;
+            communityMembers[record.contributor].totalHoursValidated += record
+                .hoursSpent;
         }
 
         emit WorkRecordResolved(_recordId, _challengeAccepted);
     }
 
     // 获取成员总有效工时
-    function getMemberTotalHours(address _member) external view returns (uint256) {
+    function getMemberTotalHours(
+        address _member
+    ) external view returns (uint256) {
         return communityMembers[_member].totalHoursValidated;
+    }
+
+    // 获取未完成的工作记录
+    function getPendingRecords() external view returns (uint256[] memory) {
+        uint256[] memory pendingRecordIds = new uint256[](workRecords.length);
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < workRecords.length; i++) {
+            // 只检查 isFinalized 状态
+            if (!workRecords[i].isFinalized) {
+                pendingRecordIds[count] = i;
+                count++;
+            }
+        }
+
+        // 调整数组大小以匹配实际待处理记录数量
+        uint256[] memory result = new uint256[](count);
+        for (uint256 j = 0; j < count; j++) {
+            result[j] = pendingRecordIds[j];
+        }
+
+        return result;
+    }
+
+    function finalizeRecord(uint256 _recordId) external {
+        WorkRecord storage record = workRecords[_recordId];
+
+        // 检查是否超过挑战期且未被挑战
+        require(
+            block.timestamp > record.challengePeriod,
+            "Challenge period not over"
+        );
+        require(!record.isChallenged, "Record is challenged");
+        require(!record.isFinalized, "Record already finalized");
+
+        // 自动确认记录
+        record.isFinalized = true;
+        communityMembers[record.contributor].totalHoursValidated += record
+            .hoursSpent;
+
+        emit WorkRecordAutoFinalized(_recordId);
     }
 }

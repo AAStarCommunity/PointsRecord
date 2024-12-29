@@ -81,7 +81,6 @@ Freeze a community member.
   - `onlyAdmins`
 
 ### `submitWorkRecord(uint8 _hoursSpent, WorkType _workType, string memory _proof) returns (uint256)`
-
 Submit a work record.
 
 - Parameters:
@@ -94,7 +93,6 @@ Submit a work record.
   - `onlyActiveMember`
 
 ### `challengeWorkRecord(uint256 _recordId)`
-
 Challenge a work record.
 
 - Parameters:
@@ -103,7 +101,6 @@ Challenge a work record.
   - `onlyActiveMember`
 
 ### `resolveChallenge(uint256 _recordId, bool _challengeAccepted)`
-
 Resolve a work record challenge.
 
 - Parameters:
@@ -113,7 +110,6 @@ Resolve a work record challenge.
   - `onlyAdmins`
 
 ### `getMemberTotalHours(address _member) external view returns (uint256)`
-
 Get the total validated hours of a member.
 
 - Parameters:
@@ -160,3 +156,10 @@ Triggered when a work record challenge is resolved.
 - Parameters:
   - `recordId`: ID of the work record
   - `successful`: Whether the challenge was successful
+
+### `WorkRecordAutoFinalized(uint256 indexed recordId)`
+
+Triggered when a work record is automatically finalized.
+
+- Parameters:
+  - `recordId`: ID of the work record
