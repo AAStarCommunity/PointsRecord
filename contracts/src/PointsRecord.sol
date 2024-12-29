@@ -56,6 +56,7 @@ contract CommunityPointsRecord {
     error InvalidWorkRecord();
     error ChallengePeriodNotExpired();
     error AlreadyChallenged();
+    error CannotChallengeSelfRecord();
 
     // 管理员修饰符
     modifier onlyAdmins() {
@@ -144,6 +145,11 @@ contract CommunityPointsRecord {
         // 检查是否已被挑战
         if (record.isChallenged) {
             revert AlreadyChallenged();
+        }
+
+        // 防止自己挑战自己的工作记录
+        if (record.contributor == msg.sender) {
+            revert CannotChallengeSelfRecord();
         }
 
         record.isChallenged = true;

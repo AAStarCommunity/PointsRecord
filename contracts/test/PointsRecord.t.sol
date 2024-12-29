@@ -121,7 +121,11 @@ contract CommunityPointsRecordTest is Test {
                 CommunityPointsRecord.InvalidWorkRecord.selector
             )
         );
-        workRecord.submitWorkRecord(11, CommunityPointsRecord.WorkType.Code, "");
+        workRecord.submitWorkRecord(
+            11,
+            CommunityPointsRecord.WorkType.Code,
+            ""
+        );
 
         vm.stopPrank();
     }
@@ -230,6 +234,7 @@ contract CommunityPointsRecordTest is Test {
     function testGetPendingRecords() public {
         // 添加管理员和成员
         workRecord.addCommunityMember(member1);
+        workRecord.addCommunityMember(member2);
 
         // 切换到 member1 并提交工作记录
         vm.prank(member1);
@@ -253,10 +258,11 @@ contract CommunityPointsRecordTest is Test {
             "Proof 3"
         );
 
-        // 挑战和解决记录
-        vm.prank(member1);
+        // 切换到 member2 挑战记录
+        vm.prank(member2);
         workRecord.challengeWorkRecord(recordId2);
 
+        // 切换到管理员解决挑战
         workRecord.resolveChallenge(recordId2, false);
 
         // 获取未完成的记录
@@ -280,8 +286,9 @@ contract CommunityPointsRecordTest is Test {
     function testGetPendingRecordsEmpty() public {
         // 添加管理员和成员
         workRecord.addCommunityMember(member1);
+        workRecord.addCommunityMember(member2);
 
-        // 提交工作记录
+        // 切换到 member1 提交工作记录
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
@@ -289,10 +296,11 @@ contract CommunityPointsRecordTest is Test {
             "Proof 1"
         );
 
-        // 挑战和解决记录
-        vm.prank(member1);
+        // 切换到 member2 挑战记录
+        vm.prank(member2);
         workRecord.challengeWorkRecord(recordId);
 
+        // 切换到管理员解决记录的挑战（finalize）
         workRecord.resolveChallenge(recordId, false);
 
         // 获取未完成的记录
@@ -371,6 +379,7 @@ contract CommunityPointsRecordTest is Test {
     function testCannotFinalizeChallendgedRecord() public {
         // 添加管理员和成员
         workRecord.addCommunityMember(member1);
+        workRecord.addCommunityMember(member2);
 
         // 切换到 member1 并提交工作记录
         vm.prank(member1);
@@ -380,8 +389,8 @@ contract CommunityPointsRecordTest is Test {
             "Proof 1"
         );
 
-        // 模拟挑战记录
-        vm.prank(member1);
+        // 切换到 member2 挑战记录
+        vm.prank(member2);
         workRecord.challengeWorkRecord(recordId);
 
         // 模拟时间过去 15 天
@@ -414,5 +423,28 @@ contract CommunityPointsRecordTest is Test {
         // 尝试第二次 finalize（应该失败）
         vm.expectRevert("Record already finalized");
         workRecord.finalizeRecord(recordId);
+    }
+
+    // 测试不能挑战自己的工作记录
+    function testCannotChallengeSelfRecord() public {
+        // 添加管理员和成员
+        workRecord.addCommunityMember(member1);
+
+        // 切换到 member1 并提交工作记录
+        vm.prank(member1);
+        uint256 recordId = workRecord.submitWorkRecord(
+            5,
+            CommunityPointsRecord.WorkType.Document,
+            "Proof 1"
+        );
+
+        // 尝试挑战自己的记录（应该失败）
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CommunityPointsRecord.CannotChallengeSelfRecord.selector
+            )
+        );
+        vm.prank(member1);
+        workRecord.challengeWorkRecord(recordId);
     }
 }
