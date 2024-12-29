@@ -34,10 +34,11 @@ contract CommunityPointsRecord {
     WorkRecord[] public workRecords;
 
     // 常量
-    uint256 public constant CHALLENGE_PERIOD = 14 days;
+    uint256 public constant CHALLENGE_PERIOD = 0 days;
 
     // 事件
     event MemberAdded(address indexed member);
+    event AdminAdded(address indexed admin);
     event MemberFrozen(address indexed member);
     event WorkRecordSubmitted(
         uint256 indexed recordId,
@@ -51,12 +52,15 @@ contract CommunityPointsRecord {
     event WorkRecordAutoFinalized(uint256 indexed recordId);
 
     // 错误
+    error NotOwner();
     error NotAdmin();
     error NotActiveMember();
     error InvalidWorkRecord();
     error ChallengePeriodNotExpired();
     error AlreadyChallenged();
     error CannotChallengeSelfRecord();
+    error AdminAlreadyExists();
+    error InvalidAddress();
 
     // 管理员修饰符
     modifier onlyAdmins() {
@@ -73,14 +77,60 @@ contract CommunityPointsRecord {
         _;
     }
 
+    // 活跃社区成员映射
+    mapping(address => bool) public activeCommunityMembers;
+
+    // 社区成员数量
+    uint256 public communityMembersCount;
+
+    // 合约所有者
+    address public owner;
+
+    // 所有者修饰符
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert NotOwner();
+        }
+        _;
+    }
+
     // 构造函数
     constructor() {
+        owner = msg.sender;
+
+        // 直接设置管理员和社区成员
         admins[msg.sender] = true;
+        activeCommunityMembers[msg.sender] = true;
+        communityMembersCount++;
+
+        // 触发事件
+        emit AdminAdded(msg.sender);
+        emit MemberAdded(msg.sender);
     }
 
     // 添加管理员
-    function addAdmin(address _newAdmin) external onlyAdmins {
-        admins[_newAdmin] = true;
+    function addAdmin(address _admin) external onlyOwner {
+        // 检查管理员地址是否有效
+        if (_admin == address(0)) {
+            revert InvalidAddress();
+        }
+
+        // 检查是否已经是管理员
+        if (admins[_admin]) {
+            revert AdminAlreadyExists();
+        }
+
+        // 添加管理员
+        admins[_admin] = true;
+
+        // 如果管理员尚未是社区成员，则自动添加
+        if (!activeCommunityMembers[_admin]) {
+            activeCommunityMembers[_admin] = true;
+            communityMembersCount++;
+        }
+
+        emit AdminAdded(_admin);
+        emit MemberAdded(_admin);
     }
 
     // 添加社区成员

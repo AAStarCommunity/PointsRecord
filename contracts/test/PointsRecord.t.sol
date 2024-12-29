@@ -447,4 +447,40 @@ contract CommunityPointsRecordTest is Test {
         vm.prank(member1);
         workRecord.challengeWorkRecord(recordId);
     }
+    
+    // 测试添加管理员时自动成为社区成员
+    function testAddAdminAutoAddAsMember() public {
+        // 获取一个新的管理员地址
+        address newAdmin = address(0x123);
+
+        // 添加新管理员
+        workRecord.addAdmin(newAdmin);
+
+        // 验证新管理员是管理员
+        assertTrue(workRecord.admins(newAdmin), "Should be an admin");
+
+        // 验证新管理员是社区成员
+        assertTrue(
+            workRecord.activeCommunityMembers(newAdmin),
+            "Should be a community member"
+        );
+
+        // 验证不能重复添加管理员
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CommunityPointsRecord.AdminAlreadyExists.selector
+            )
+        );
+        workRecord.addAdmin(newAdmin);
+    }
+
+    // 测试添加零地址管理员
+    function testCannotAddZeroAddressAdmin() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CommunityPointsRecord.InvalidAddress.selector
+            )
+        );
+        workRecord.addAdmin(address(0));
+    }
 }
