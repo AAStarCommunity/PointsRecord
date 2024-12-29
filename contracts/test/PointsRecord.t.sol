@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../src/PointsRecord.sol";
 
-contract CommunityWorkRecordTest is Test {
-    CommunityWorkRecord public workRecord;
+contract CommunityPointsRecordTest is Test {
+    CommunityPointsRecord public workRecord;
     address public owner;
     address public admin2;
     address public member1;
@@ -13,7 +13,7 @@ contract CommunityWorkRecordTest is Test {
 
     function setUp() public {
         // 部署合约
-        workRecord = new CommunityWorkRecord();
+        workRecord = new CommunityPointsRecord();
 
         // 获取部署者地址
         owner = address(this);
@@ -71,7 +71,7 @@ contract CommunityWorkRecordTest is Test {
         // 提交工作记录
         uint256 recordId = workRecord.submitWorkRecord(
             5, // 工时
-            CommunityWorkRecord.WorkType.Code, // 工作类型
+            CommunityPointsRecord.WorkType.Code, // 工作类型
             "proof" // 证明
         );
 
@@ -81,7 +81,7 @@ contract CommunityWorkRecordTest is Test {
         (
             address contributor,
             uint8 hoursSpent,
-            CommunityWorkRecord.WorkType workType,
+            CommunityPointsRecord.WorkType workType,
             string memory proof,
             ,
             ,
@@ -93,7 +93,7 @@ contract CommunityWorkRecordTest is Test {
         assertEq(hoursSpent, 5, "Hours should match");
         assertEq(
             uint8(workType),
-            uint8(CommunityWorkRecord.WorkType.Code),
+            uint8(CommunityPointsRecord.WorkType.Code),
             "Work type should match"
         );
         assertEq(proof, "proof", "Proof should match");
@@ -110,18 +110,18 @@ contract CommunityWorkRecordTest is Test {
         // 尝试提交0小时工作记录
         vm.expectRevert(
             abi.encodeWithSelector(
-                CommunityWorkRecord.InvalidWorkRecord.selector
+                CommunityPointsRecord.InvalidWorkRecord.selector
             )
         );
-        workRecord.submitWorkRecord(0, CommunityWorkRecord.WorkType.Code, "");
+        workRecord.submitWorkRecord(0, CommunityPointsRecord.WorkType.Code, "");
 
         // 尝试提交超过10小时的工作记录
         vm.expectRevert(
             abi.encodeWithSelector(
-                CommunityWorkRecord.InvalidWorkRecord.selector
+                CommunityPointsRecord.InvalidWorkRecord.selector
             )
         );
-        workRecord.submitWorkRecord(11, CommunityWorkRecord.WorkType.Code, "");
+        workRecord.submitWorkRecord(11, CommunityPointsRecord.WorkType.Code, "");
 
         vm.stopPrank();
     }
@@ -136,7 +136,7 @@ contract CommunityWorkRecordTest is Test {
         vm.startPrank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Code,
+            CommunityPointsRecord.WorkType.Code,
             "proof"
         );
         vm.stopPrank();
@@ -161,7 +161,7 @@ contract CommunityWorkRecordTest is Test {
         vm.startPrank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Code,
+            CommunityPointsRecord.WorkType.Code,
             "proof"
         );
         vm.stopPrank();
@@ -182,7 +182,7 @@ contract CommunityWorkRecordTest is Test {
         vm.startPrank(member1);
         uint256 newRecordId = workRecord.submitWorkRecord(
             7,
-            CommunityWorkRecord.WorkType.Community,
+            CommunityPointsRecord.WorkType.Community,
             "proof"
         );
         vm.stopPrank();
@@ -208,7 +208,7 @@ contract CommunityWorkRecordTest is Test {
         vm.startPrank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Code,
+            CommunityPointsRecord.WorkType.Code,
             "proof"
         );
         vm.stopPrank();
@@ -218,7 +218,7 @@ contract CommunityWorkRecordTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                CommunityWorkRecord.AlreadyChallenged.selector
+                CommunityPointsRecord.AlreadyChallenged.selector
             )
         );
         workRecord.challengeWorkRecord(recordId);
@@ -235,21 +235,21 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId1 = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 
         vm.prank(member1);
         uint256 recordId2 = workRecord.submitWorkRecord(
             3,
-            CommunityWorkRecord.WorkType.Community,
+            CommunityPointsRecord.WorkType.Community,
             "Proof 2"
         );
 
         vm.prank(member1);
         uint256 recordId3 = workRecord.submitWorkRecord(
             7,
-            CommunityWorkRecord.WorkType.Code,
+            CommunityPointsRecord.WorkType.Code,
             "Proof 3"
         );
 
@@ -285,7 +285,7 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 
@@ -311,7 +311,7 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 
@@ -358,7 +358,7 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 
@@ -376,7 +376,7 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 
@@ -401,7 +401,7 @@ contract CommunityWorkRecordTest is Test {
         vm.prank(member1);
         uint256 recordId = workRecord.submitWorkRecord(
             5,
-            CommunityWorkRecord.WorkType.Document,
+            CommunityPointsRecord.WorkType.Document,
             "Proof 1"
         );
 

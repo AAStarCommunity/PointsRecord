@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract CommunityWorkRecord {
+contract CommunityPointsRecord {
     // 工作记录结构
     struct WorkRecord {
         address contributor; // 贡献者
