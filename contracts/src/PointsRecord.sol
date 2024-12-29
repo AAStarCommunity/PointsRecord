@@ -23,6 +23,7 @@ contract CommunityPointsRecord {
 
     // 社区成员结构
     struct CommunityMember {
+        bool exists; // 是否存在
         bool isActive; // 是否为活跃成员
         bool isFrozen; // 是否被冻结
         uint256 totalHoursValidated; // 总有效工时
@@ -77,9 +78,6 @@ contract CommunityPointsRecord {
         _;
     }
 
-    // 活跃社区成员映射
-    mapping(address => bool) public activeCommunityMembers;
-
     // 社区成员数量
     uint256 public communityMembersCount;
 
@@ -100,7 +98,6 @@ contract CommunityPointsRecord {
 
         // 直接设置管理员和社区成员
         admins[msg.sender] = true;
-        activeCommunityMembers[msg.sender] = true;
         communityMembersCount++;
 
         // 触发事件
@@ -123,9 +120,13 @@ contract CommunityPointsRecord {
         // 添加管理员
         admins[_admin] = true;
 
-        // 如果管理员尚未是社区成员，则自动添加
-        if (!activeCommunityMembers[_admin]) {
-            activeCommunityMembers[_admin] = true;
+        if (!communityMembers[_admin].exists) {
+            communityMembers[_admin] = CommunityMember({
+                exists: true,
+                isActive: true,
+                isFrozen: false,
+                totalHoursValidated: 0
+            });
             communityMembersCount++;
         }
 
@@ -135,14 +136,15 @@ contract CommunityPointsRecord {
 
     // 添加社区成员
     function addCommunityMember(address _member) external onlyAdmins {
-        require(!communityMembers[_member].isActive, "Member already exists");
+        require(!communityMembers[_member].exists, "Member already exists");
 
         communityMembers[_member] = CommunityMember({
+            exists: true,
             isActive: true,
             isFrozen: false,
             totalHoursValidated: 0
         });
-
+        communityMembersCount++;
         emit MemberAdded(_member);
     }
 
