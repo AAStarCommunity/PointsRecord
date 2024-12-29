@@ -1,113 +1,162 @@
-
-# OptimisticPointsRecord 智能合约
+# CommunityWorkRecord 智能合约
 
 ## 概述
 
-`OptimisticPointsRecord` 是一个复杂的 Solidity 智能合约，采用乐观治理模型，专为社区驱动的记录管理而设计。该合约使社区成员能够提交、挑战和最终确认记录，同时保持透明度和问责制。
+CommunityWorkRecord 是一个去中心化的社区工作记录管理智能合约，旨在透明且公平地记录和验证社区成员的工作贡献。
 
-## 主要特性
+## 主要功能
 
-### 1. 社区成员管理
-- 添加和管理社区成员
-- 冻结和解冻成员账户
-- 限制关键操作仅对活跃社区成员开放
+- 社区成员管理
+- 工作贡献记录
+- 工作记录挑战机制
+- 工作类型分类
 
-### 2. 记录提交
-- 成员可以提交贡献记录
-- 每条记录包括：
-  - 贡献者地址
-  - 时间戳
-  - 花费时间
-  - 贡献类型
-  - 详细信息
-  - 最终确认状态
+## 核心特性
 
-### 3. 挑战机制
-- 允许对已提交的记录进行挑战
-- 需要支付挑战保证金（0.1 以太币）
-- 管理员可以解决挑战
-- 成功的挑战会阻止记录最终确认
+1. 只有管理员可以添加社区成员
+2. 成员可以提交工作记录
+3. 14 天的挑战期
+4. 管理员仲裁挑战结果
 
-## 核心概念
+## 工作类型
 
-### 乐观治理
-- 记录初始被乐观接受
-- 挑战提供社区监督机制
-- 挑战保证金激励负责任的参与
+- 文档
+- 社区
+- 代码
 
-### 访问控制
-- 所有者可以添加管理员
-- 仅管理员可以：
+## 工作记录流程
+
+1. 成员提交工作记录
+2. 在 14 天内可以被挑战
+3. 管理员决定挑战结果
+   - 挑战成功：清除工作记录
+   - 挑战失败：确认工作记录并累计工时
+
+## 权限控制
+
+- 只有管理员可以：
   - 添加社区成员
-  - 提交记录
-  - 解决挑战
+  - 冻结社区成员
+  - 添加其他管理员
+  - 仲裁挑战
 
-## 技术规格
+## 安全机制
 
-- **Solidity 版本**：0.8.19
-- **挑战期**：7 天
-- **挑战保证金**：0.1 以太币
-- **关键事件**：
-  - `RecordSubmitted`（记录提交）
-  - `RecordChallenged`（记录被挑战）
-  - `RecordFinalized`（记录最终确认）
-  - `ChallengeSucceeded`（挑战成功）
-  - `ChallengeFailed`（挑战失败）
+- 防止重复添加成员
+- 限制工作记录的工时范围
+- 防止对同一记录的重复挑战
 
-## 工作流程
+## 开发环境
 
-1. **记录提交**
-   - 管理员提交记录
-   - 记录进入 7 天挑战期
-   - 记录初始未最终确认
-
-2. **挑战记录**
-   - 任何用户可以通过支付 0.1 以太币保证金进行挑战
-   - 挑战必须在 7 天内进行
-   - 管理员解决挑战
-
-3. **挑战解决**
-   - 如果挑战被接受：
-     - 挑战者获得 2 倍保证金
-     - 记录标记为未最终确认
-   - 如果挑战被拒绝：
-     - 保证金转移给合约所有者
-     - 记录保持原有路径
-
-## 安全考虑
-
-- 严格的访问控制
-- 挑战保证金机制
-- 显式状态管理
-- 防止未经授权的记录最终确认
-
-## 安装与部署
-
-### 前提条件
-- Foundry
 - Solidity ^0.8.19
-- 以太坊开发环境
+- Foundry 测试框架
 
-### 部署步骤
-1. 编译合约
-2. 使用 Foundry 或 Hardhat 部署
-3. 设置初始所有者和管理员
-4. 添加初始社区成员
+## 方法
 
-## 使用示例
+### `addAdmin(address _newAdmin)`
 
-```solidity
-// 部署合约
-OptimisticPointsRecord record = new OptimisticPointsRecord();
+添加新的管理员。
 
-// 添加管理员
-record.addAdmin(adminAddress);
+- 参数:
+  - `_newAdmin`: 新管理员的地址
+- 修饰符:
+  - `onlyAdmins`
 
-// 提交记录
-uint256 recordId = record.submitRecord("开发", "实现功能 X", 5);
+### `addCommunityMember(address _member)`
 
-// 挑战记录
-record.challengeRecord{value: 0.1 ether}(recordId);
+添加新的社区成员。
 
-// 解决挑战（由管理员）
-record.resolveChallenge(recordId, 0, true);
+- 参数:
+  - `_member`: 新成员的地址
+- 修饰符:
+  - `onlyAdmins`
+
+### `freezeMember(address _member)`
+
+冻结社区成员。
+
+- 参数:
+  - `_member`: 要冻结的成员地址
+- 修饰符:
+  - `onlyAdmins`
+
+### `submitWorkRecord(uint8 _hoursSpent, WorkType _workType, string memory _proof) returns (uint256)`
+
+提交工作记录。
+
+- 参数:
+  - `_hoursSpent`: 工时
+  - `_workType`: 工作类型
+  - `_proof`: 证明材料
+- 返回值:
+  - `recordId`: 工作记录的ID
+- 修饰符:
+  - `onlyActiveMember`
+
+### `challengeWorkRecord(uint256 _recordId)`
+
+挑战工作记录。
+
+- 参数:
+  - `_recordId`: 工作记录的ID
+- 修饰符:
+  - `onlyActiveMember`
+
+### `resolveChallenge(uint256 _recordId, bool _challengeAccepted)`
+
+解决工作记录的挑战。
+
+- 参数:
+  - `_recordId`: 工作记录的ID
+  - `_challengeAccepted`: 挑战是否被接受
+- 修饰符:
+  - `onlyAdmins`
+
+### `getMemberTotalHours(address _member) external view returns (uint256)`
+
+获取成员的总有效工时。
+
+- 参数:
+  - `_member`: 成员地址
+- 返回值:
+  - `totalHoursValidated`: 总有效工时
+
+## 事件
+
+### `MemberAdded(address indexed member)`
+
+当新的社区成员被添加时触发。
+
+- 参数:
+  - `member`: 新成员的地址
+
+### `MemberFrozen(address indexed member)`
+
+当社区成员被冻结时触发。
+
+- 参数:
+  - `member`: 被冻结的成员地址
+
+### `WorkRecordSubmitted(uint256 indexed recordId, address indexed contributor)`
+
+当工作记录被提交时触发。
+
+- 参数:
+  - `recordId`: 工作记录的ID
+  - `contributor`: 贡献者的地址
+
+### `WorkRecordChallenged(uint256 indexed recordId, address indexed challenger)`
+
+当工作记录被挑战时触发。
+
+- 参数:
+  - `recordId`: 工作记录的ID
+  - `challenger`: 挑战者的地址
+
+### `WorkRecordResolved(uint256 indexed recordId, bool successful)`
+
+当工作记录的挑战被解决时触发。
+
+- 参数:
+  - `recordId`: 工作记录的ID
+  - `successful`: 挑战是否成功

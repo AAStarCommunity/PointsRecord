@@ -1,112 +1,162 @@
-# OptimisticPointsRecord Smart Contract
+# CommunityWorkRecord Smart Contract
 
 ## Overview
 
-`OptimisticPointsRecord` is a sophisticated Solidity smart contract designed for community-driven record management with an optimistic governance model. The contract enables community members to submit, challenge, and finalize records while maintaining transparency and accountability.
+CommunityWorkRecord is a decentralized community work record management smart contract designed to transparently and fairly record and verify the contributions of community members.
 
-## Key Features
+## Main Features
 
-### 1. Community Membership Management
-- Add and manage community members
-- Freeze and unfreeze member accounts
-- Restrict critical actions to active community members
+- Community member management
+- Work contribution recording
+- Work record challenge mechanism
+- Work type classification
 
-### 2. Record Submission
-- Members can submit contribution records
-- Each record includes:
-  - Contributor address
-  - Timestamp
-  - Hours spent
-  - Contribution type
-  - Details
-  - Finalization status
+## Core Features
 
-### 3. Challenge Mechanism
-- Allows challenging submitted records
-- Requires a challenge bond (0.1 ether)
-- Admins can resolve challenges
-- Successful challenges prevent record finalization
+1. Only administrators can add community members
+2. Members can submit work records
+3. 14-day challenge period
+4. Administrators arbitrate challenge results
 
-## Core Concepts
+## Work Types
 
-### Optimistic Governance
-- Records are initially accepted optimistically
-- Challenges provide a mechanism for community oversight
-- Challenge bond incentivizes responsible participation
+- Document
+- Community
+- Code
 
-### Access Control
-- Owner can add administrators
+## Work Record Process
+
+1. Members submit work records
+2. Can be challenged within 14 days
+3. Administrators decide the challenge result
+   - Challenge successful: work record is cleared
+   - Challenge failed: work record is confirmed and hours are accumulated
+
+## Permission Control
+
 - Only administrators can:
   - Add community members
-  - Submit records
-  - Resolve challenges
+  - Freeze community members
+  - Add other administrators
+  - Arbitrate challenges
 
-## Technical Specifications
+## Security Mechanisms
 
-- **Solidity Version**: 0.8.19
-- **Challenge Period**: 7 days
-- **Challenge Bond**: 0.1 ether
-- **Key Events**:
-  - `RecordSubmitted`
-  - `RecordChallenged`
-  - `RecordFinalized`
-  - `ChallengeSucceeded`
-  - `ChallengeFailed`
+- Prevent duplicate member additions
+- Limit the range of work record hours
+- Prevent duplicate challenges on the same record
 
-## Workflow
+## Development Environment
 
-1. **Record Submission**
-   - Admin submits a record
-   - Record enters a 7-day challenge period
-   - Record is not initially finalized
-
-2. **Challenging a Record**
-   - Any user can challenge by paying 0.1 ether bond
-   - Challenge must occur within 7-day period
-   - Admin resolves the challenge
-
-3. **Challenge Resolution**
-   - If challenge is accepted:
-     - Challenger receives 2x bond
-     - Record is marked as non-finalized
-   - If challenge is rejected:
-     - Bond is transferred to contract owner
-     - Record remains on its original path
-
-## Security Considerations
-
-- Strict access controls
-- Challenge bond mechanism
-- Explicit state management
-- Prevents unauthorized record finalization
-
-## Installation & Deployment
-
-### Prerequisites
-- Foundry
 - Solidity ^0.8.19
-- Ethereum development environment
+- Foundry testing framework
 
-### Deployment Steps
-1. Compile the contract
-2. Deploy using Foundry or Hardhat
-3. Set initial owner and admin
-4. Add initial community members
+## Methods
 
-## Example Usage
+### `addAdmin(address _newAdmin)`
 
-```solidity
-// Deploy contract
-OptimisticPointsRecord record = new OptimisticPointsRecord();
+Add a new administrator.
 
-// Add admin
-record.addAdmin(adminAddress);
+- Parameters:
+  - `_newAdmin`: Address of the new administrator
+- Modifiers:
+  - `onlyAdmins`
 
-// Submit record
-uint256 recordId = record.submitRecord("Development", "Implemented feature X", 5);
+### `addCommunityMember(address _member)`
 
-// Challenge record
-record.challengeRecord{value: 0.1 ether}(recordId);
+Add a new community member.
 
-// Resolve challenge (by admin)
-record.resolveChallenge(recordId, 0, true);
+- Parameters:
+  - `_member`: Address of the new member
+- Modifiers:
+  - `onlyAdmins`
+
+### `freezeMember(address _member)`
+
+Freeze a community member.
+
+- Parameters:
+  - `_member`: Address of the member to be frozen
+- Modifiers:
+  - `onlyAdmins`
+
+### `submitWorkRecord(uint8 _hoursSpent, WorkType _workType, string memory _proof) returns (uint256)`
+
+Submit a work record.
+
+- Parameters:
+  - `_hoursSpent`: Hours spent
+  - `_workType`: Type of work
+  - `_proof`: Proof material
+- Returns:
+  - `recordId`: ID of the work record
+- Modifiers:
+  - `onlyActiveMember`
+
+### `challengeWorkRecord(uint256 _recordId)`
+
+Challenge a work record.
+
+- Parameters:
+  - `_recordId`: ID of the work record
+- Modifiers:
+  - `onlyActiveMember`
+
+### `resolveChallenge(uint256 _recordId, bool _challengeAccepted)`
+
+Resolve a work record challenge.
+
+- Parameters:
+  - `_recordId`: ID of the work record
+  - `_challengeAccepted`: Whether the challenge is accepted
+- Modifiers:
+  - `onlyAdmins`
+
+### `getMemberTotalHours(address _member) external view returns (uint256)`
+
+Get the total validated hours of a member.
+
+- Parameters:
+  - `_member`: Address of the member
+- Returns:
+  - `totalHoursValidated`: Total validated hours
+
+## Events
+
+### `MemberAdded(address indexed member)`
+
+Triggered when a new community member is added.
+
+- Parameters:
+  - `member`: Address of the new member
+
+### `MemberFrozen(address indexed member)`
+
+Triggered when a community member is frozen.
+
+- Parameters:
+  - `member`: Address of the frozen member
+
+### `WorkRecordSubmitted(uint256 indexed recordId, address indexed contributor)`
+
+Triggered when a work record is submitted.
+
+- Parameters:
+  - `recordId`: ID of the work record
+  - `contributor`: Address of the contributor
+
+### `WorkRecordChallenged(uint256 indexed recordId, address indexed challenger)`
+
+Triggered when a work record is challenged.
+
+- Parameters:
+  - `recordId`: ID of the work record
+  - `challenger`: Address of the challenger
+
+### `WorkRecordResolved(uint256 indexed recordId, bool successful)`
+
+Triggered when a work record challenge is resolved.
+
+- Parameters:
+  - `recordId`: ID of the work record
+  - `successful`: Whether the challenge was successful
