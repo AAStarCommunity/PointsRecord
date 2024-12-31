@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
 import CommitPointsForm from '@/components/commit-points-form';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -21,10 +22,44 @@ export default function Home() {
     if (!isConnected) {
       openConnectModal?.();
     } else {
-      const confirmed = window.confirm('Are you sure you want to disconnect?');
-      if (confirmed) {
-        disconnect();
-      }
+      toast.custom((t) => (
+        <div className={`
+          ${t.visible ? 'animate-enter' : 'animate-leave'}
+          max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 transition-all duration-300 ease-in-out
+        `}>
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-center">
+              <div className="ml-3 w-0 flex-1 pt-0.5">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to disconnect?
+                </p>
+              </div>
+            </div>
+            <div className="ml-4 flex-shrink-0 flex">
+              <button
+                onClick={() => {
+                  disconnect();
+                  toast.dismiss(t.id);
+                }}
+                className="bg-red-500 text-white px-3 py-2 rounded mr-2 text-sm"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  toast.remove(t.id);
+                }}
+                className="bg-gray-200 text-black px-3 py-2 rounded text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ), {
+        duration: Infinity,
+        position: 'top-center',
+      });
     }
   };
 

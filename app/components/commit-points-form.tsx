@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useEffect, useState } from 'react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { POINTS_RECORD_ABI } from '@/abi/PointsRecord';
+import { toast } from 'react-hot-toast';
 
 interface CommitPointsFormProps {
     onBack: () => void;
@@ -12,14 +14,57 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
     const [points, setPoints] = useState('');
     const [description, setDescription] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const {
+        writeContract,
+        isPending,
+        error: submitError,
+        data: hash  // 直接解构获取哈希
+    } = useWriteContract();
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Submitting points:', {
-            points,
-            description,
-            walletAddress: address
-        });
+        if (!address) {
+            toast.error('Please connect your wallet first');
+            return;
+        }
+
+        try {
+            writeContract({
+                address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+                abi: POINTS_RECORD_ABI,
+                functionName: 'submitWorkRecord',
+                args: [Number(points), 1, description]
+            });
+        } catch (error) {
+            toast.error('Failed to submit transaction');
+        }
     };
+
+    // 使用 useEffect 监听交易状态
+    useEffect(() => {
+        if (hash) {
+            toast.loading('Transaction pending...', { id: 'tx' });
+        }
+    }, [hash]);
+
+    const { isSuccess, isError } = useWaitForTransactionReceipt({
+        hash,  // 直接使用解构的 hash
+    });
+
+    // 交易成功或失败的提示
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success('Points submitted successfully!', { id: 'tx' });
+            onBack(); // 返回主页
+        }
+        if (isError || submitError) {
+            toast.error('Failed to submit points', { id: 'tx' });
+        }
+    }, [isSuccess, isError, submitError, onBack]);
+
+    if (isError || submitError) {
+        toast.error('Failed to submit points');
+    }
 
     // 获取上个月的月份和年份
     const getPreviousMonthInfo = () => {

@@ -1,5 +1,0 @@
-export const CONFIG = {
-  OPTIMISM_SEPOLIA_RPC: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC || "https://sepolia.optimism.io",
-  CONTRACT_ADDRESS: "0xf7833c6e5160ab6468E6CDa4672f638B4a59Cc53",
-  AIRSTACK_API_KEY: process.env.NEXT_PUBLIC_AIRSTACK_API_KEY || ""
-} 
