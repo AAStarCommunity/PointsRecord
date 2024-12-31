@@ -1,84 +1,287 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract PointsRecord {
-    struct ContributionRecord {
-        uint256 timestamp;
-        address contributorAddress;
-        string nickname;
-        string contributionType;
-        string details;
-        uint8 hoursSpent;
+contract CommunityPointsRecord {
+    // 工作记录结构
+    struct WorkRecord {
+        address contributor; // 贡献者
+        uint8 hoursSpent; // 工时
+        WorkType workType; // 工作类型
+        string proof; // 证明材料
+        uint256 submissionTime; // 提交时间
+        uint256 challengePeriod; // 挑战期限
+        bool isFinalized; // 是否已最终确认
+        bool isChallenged; // 是否已被挑战
     }
-    
-    mapping(address => string) public nicknames;
-    ContributionRecord[] public records;
-    mapping(address => uint256[]) public userRecordIndices;
-    
-    event RecordAdded(address indexed contributor, uint256 timestamp);
-    event NicknameSet(address indexed user, string nickname);
-    
-    error InvalidHours();
-    error EmptyNickname();
-    
-    function setNickname(string memory _nickname) public {
-        if (bytes(_nickname).length == 0) {
-            revert EmptyNickname();
-        }
-        nicknames[msg.sender] = _nickname;
-        emit NicknameSet(msg.sender, _nickname);
+
+    // 工作类型枚举
+    enum WorkType {
+        Document, // 文档
+        Community, // 社区
+        Code // 代码
     }
-    
-    function addRecord(
-        string memory _contributionType,
-        string memory _details,
-        uint8 _hours
-    ) public {
-        if (_hours == 0 || _hours > 10) {
-            revert InvalidHours();
+
+    // 社区成员结构
+    struct CommunityMember {
+        bool exists; // 是否存在
+        bool isActive; // 是否为活跃成员
+        bool isFrozen; // 是否被冻结
+        uint256 totalHoursValidated; // 总有效工时
+    }
+
+    // 状态变量
+    mapping(address => CommunityMember) public communityMembers;
+    mapping(address => bool) public admins;
+    WorkRecord[] public workRecords;
+
+    // 常量
+    uint256 public constant CHALLENGE_PERIOD = 14 days;
+
+    // 事件
+    event MemberAdded(address indexed member);
+    event AdminAdded(address indexed admin);
+    event MemberFrozen(address indexed member);
+    event WorkRecordSubmitted(
+        uint256 indexed recordId,
+        address indexed contributor
+    );
+    event WorkRecordChallenged(
+        uint256 indexed recordId,
+        address indexed challenger
+    );
+    event WorkRecordResolved(uint256 indexed recordId, bool successful);
+    event WorkRecordAutoFinalized(uint256 indexed recordId);
+
+    // 错误
+    error NotOwner();
+    error NotAdmin();
+    error NotActiveMember();
+    error InvalidWorkRecord();
+    error ChallengePeriodNotExpired();
+    error AlreadyChallenged();
+    error CannotChallengeSelfRecord();
+    error AdminAlreadyExists();
+    error InvalidAddress();
+
+    // 管理员修饰符
+    modifier onlyAdmins() {
+        if (!admins[msg.sender]) revert NotAdmin();
+        _;
+    }
+
+    // 活跃成员修饰符
+    modifier onlyActiveMember() {
+        if (
+            !communityMembers[msg.sender].isActive ||
+            communityMembers[msg.sender].isFrozen
+        ) revert NotActiveMember();
+        _;
+    }
+
+    // 社区成员数量
+    uint256 public communityMembersCount;
+
+    // 合约所有者
+    address public owner;
+
+    // 所有者修饰符
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert NotOwner();
         }
-        
-        string memory nickname = bytes(nicknames[msg.sender]).length > 0 
-            ? nicknames[msg.sender] 
-            : addressToString(msg.sender);
-            
-        ContributionRecord memory newRecord = ContributionRecord({
-            timestamp: block.timestamp,
-            contributorAddress: msg.sender,
-            nickname: nickname,
-            contributionType: _contributionType,
-            details: _details,
-            hoursSpent: _hours
+        _;
+    }
+
+    // 构造函数
+    constructor() {
+        owner = msg.sender;
+
+        // 直接设置管理员和社区成员
+        admins[msg.sender] = true;
+        communityMembers[msg.sender] = CommunityMember({
+            exists: true,
+            isActive: true,
+            isFrozen: false,
+            totalHoursValidated: 0
         });
-        
-        records.push(newRecord);
-        userRecordIndices[msg.sender].push(records.length - 1);
-        
-        emit RecordAdded(msg.sender, block.timestamp);
+        communityMembersCount++;
+        emit AdminAdded(msg.sender);
+        emit MemberAdded(msg.sender);
     }
-    
-    function getUserRecordIndices(address _user) public view returns (uint256[] memory) {
-        return userRecordIndices[_user];
-    }
-    
-    function getRecordCount() public view returns (uint256) {
-        return records.length;
-    }
-    
-    function getUserRecordCount(address _user) public view returns (uint256) {
-        return userRecordIndices[_user].length;
-    }
-    
-    function addressToString(address _addr) internal pure returns (string memory) {
-        bytes memory data = abi.encodePacked(_addr);
-        bytes memory alphabet = "0123456789abcdef";
-        bytes memory str = new bytes(42);
-        str[0] = "0";
-        str[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            str[2+i*2] = alphabet[uint8(data[i] >> 4)];
-            str[3+i*2] = alphabet[uint8(data[i] & 0x0f)];
+
+    // 添加管理员
+    function addAdmin(address _admin) external onlyOwner {
+        // 检查管理员地址是否有效
+        if (_admin == address(0)) {
+            revert InvalidAddress();
         }
-        return string(str);
+
+        // 检查是否已经是管理员
+        if (admins[_admin]) {
+            revert AdminAlreadyExists();
+        }
+
+        // 添加管理员
+        admins[_admin] = true;
+
+        if (!communityMembers[_admin].exists) {
+            communityMembers[_admin] = CommunityMember({
+                exists: true,
+                isActive: true,
+                isFrozen: false,
+                totalHoursValidated: 0
+            });
+            communityMembersCount++;
+        }
+
+        emit AdminAdded(_admin);
+        emit MemberAdded(_admin);
     }
-} 
+
+    // 添加社区成员
+    function addCommunityMember(address _member) external onlyAdmins {
+        require(!communityMembers[_member].exists, "Member already exists");
+
+        communityMembers[_member] = CommunityMember({
+            exists: true,
+            isActive: true,
+            isFrozen: false,
+            totalHoursValidated: 0
+        });
+        communityMembersCount++;
+        emit MemberAdded(_member);
+    }
+
+    // 冻结社区成员
+    function freezeMember(address _member) external onlyAdmins {
+        require(communityMembers[_member].isActive, "Member not found");
+        communityMembers[_member].isFrozen = true;
+
+        emit MemberFrozen(_member);
+    }
+
+    // 提交工作记录
+    function submitWorkRecord(
+        uint8 _hoursSpent,
+        WorkType _workType,
+        string memory _proof
+    ) external onlyActiveMember returns (uint256) {
+        // 验证工时
+        if (_hoursSpent == 0 || _hoursSpent > 10) {
+            revert InvalidWorkRecord();
+        }
+
+        WorkRecord memory newRecord = WorkRecord({
+            contributor: msg.sender,
+            hoursSpent: _hoursSpent,
+            workType: _workType,
+            proof: _proof,
+            submissionTime: block.timestamp,
+            challengePeriod: block.timestamp + CHALLENGE_PERIOD,
+            isFinalized: false,
+            isChallenged: false
+        });
+
+        workRecords.push(newRecord);
+        uint256 recordId = workRecords.length - 1;
+
+        emit WorkRecordSubmitted(recordId, msg.sender);
+        return recordId;
+    }
+
+    // 挑战工作记录
+    function challengeWorkRecord(uint256 _recordId) external onlyActiveMember {
+        WorkRecord storage record = workRecords[_recordId];
+
+        // 检查是否在挑战期内
+        if (block.timestamp > record.challengePeriod) {
+            revert ChallengePeriodNotExpired();
+        }
+
+        // 检查是否已被挑战
+        if (record.isChallenged) {
+            revert AlreadyChallenged();
+        }
+
+        // 防止自己挑战自己的工作记录
+        if (record.contributor == msg.sender) {
+            revert CannotChallengeSelfRecord();
+        }
+
+        record.isChallenged = true;
+
+        emit WorkRecordChallenged(_recordId, msg.sender);
+    }
+
+    // 解决挑战
+    function resolveChallenge(
+        uint256 _recordId,
+        bool _challengeAccepted
+    ) external onlyAdmins {
+        WorkRecord storage record = workRecords[_recordId];
+
+        // 检查是否已被挑战
+        require(record.isChallenged, "Record not challenged");
+
+        if (_challengeAccepted) {
+            // 挑战成功，清除原记录的工时
+            record.isFinalized = false;
+            record.hoursSpent = 0;
+        } else {
+            // 挑战失败，确认工作记录
+            record.isFinalized = true;
+            communityMembers[record.contributor].totalHoursValidated += record
+                .hoursSpent;
+        }
+
+        emit WorkRecordResolved(_recordId, _challengeAccepted);
+    }
+
+    // 获取成员总有效工时
+    function getMemberTotalHours(
+        address _member
+    ) external view returns (uint256) {
+        return communityMembers[_member].totalHoursValidated;
+    }
+
+    // 获取未完成的工作记录
+    function getPendingRecords() external view returns (uint256[] memory) {
+        uint256[] memory pendingRecordIds = new uint256[](workRecords.length);
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < workRecords.length; i++) {
+            // 只检查 isFinalized 状态
+            if (!workRecords[i].isFinalized) {
+                pendingRecordIds[count] = i;
+                count++;
+            }
+        }
+
+        // 调整数组大小以匹配实际待处理记录数量
+        uint256[] memory result = new uint256[](count);
+        for (uint256 j = 0; j < count; j++) {
+            result[j] = pendingRecordIds[j];
+        }
+
+        return result;
+    }
+
+    function finalizeRecord(uint256 _recordId) external {
+        WorkRecord storage record = workRecords[_recordId];
+
+        // 检查是否超过挑战期且未被挑战
+        require(
+            block.timestamp > record.challengePeriod,
+            "Challenge period not over"
+        );
+        require(!record.isChallenged, "Record is challenged");
+        require(!record.isFinalized, "Record already finalized");
+
+        // 自动确认记录
+        record.isFinalized = true;
+        communityMembers[record.contributor].totalHoursValidated += record
+            .hoursSpent;
+
+        emit WorkRecordAutoFinalized(_recordId);
+    }
+}
