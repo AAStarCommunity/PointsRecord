@@ -245,22 +245,22 @@ contract CommunityPointsRecord {
     }
 
     // 获取未完成的工作记录
-    function getPendingRecords() external view returns (uint256[] memory) {
-        uint256[] memory pendingRecordIds = new uint256[](workRecords.length);
+    function getPendingRecords() external view returns (WorkRecord[] memory) {
+        WorkRecord[] memory pendingRecords = new WorkRecord[](workRecords.length);
         uint256 count = 0;
 
         for (uint256 i = 0; i < workRecords.length; i++) {
             // 只检查 isFinalized 状态
             if (!workRecords[i].isFinalized) {
-                pendingRecordIds[count] = i;
+                pendingRecords[count] = workRecords[i];
                 count++;
             }
         }
 
         // 调整数组大小以匹配实际待处理记录数量
-        uint256[] memory result = new uint256[](count);
+        WorkRecord[] memory result = new WorkRecord[](count);
         for (uint256 j = 0; j < count; j++) {
-            result[j] = pendingRecordIds[j];
+            result[j] = pendingRecords[j];
         }
 
         return result;
