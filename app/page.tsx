@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Image from "next/image";
+import toast from 'react-hot-toast';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
 import CommitPointsForm from '@/components/commit-points-form';
-import toast from 'react-hot-toast';
+import RecordsView from '@/components/records-view';
 
 export default function Home() {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [showCommitForm, setShowCommitForm] = useState(false);
+  const [showViewForm, setShowViewForm] = useState(false);
   const { openConnectModal } = useConnectModal();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -76,6 +78,19 @@ export default function Home() {
     }
   };
 
+  const handleView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isConnected) {
+      setPendingAction(() => () => {
+        setShowViewForm(true);
+      });
+
+      openConnectModal?.();
+    } else {
+      setShowViewForm(true);
+    }
+  };
+
   useEffect(() => {
     if (isConnected && pendingAction) {
       pendingAction();
@@ -86,6 +101,10 @@ export default function Home() {
   // 如果显示提交表单，渲染表单
   if (showCommitForm) {
     return <CommitPointsForm onBack={() => setShowCommitForm(false)} />;
+  }
+
+  if (showViewForm) {
+    return <RecordsView onBack={() => setShowViewForm(false)} />;
   }
 
   return (
@@ -128,6 +147,7 @@ export default function Home() {
             href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={handleView}
           >
             View or Challenge
           </a>
