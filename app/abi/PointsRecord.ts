@@ -326,9 +326,51 @@ export const POINTS_RECORD_ABI = [
         "name": "getPendingRecords",
         "outputs": [
             {
-                "internalType": "uint256[]",
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "contributor",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "hoursSpent",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "enum CommunityPointsRecord.WorkType",
+                        "name": "workType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "proof",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "submissionTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "challengePeriod",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "isFinalized",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "isChallenged",
+                        "type": "bool"
+                    }
+                ],
+                "internalType": "struct CommunityPointsRecord.WorkRecord[]",
                 "name": "",
-                "type": "uint256[]"
+                "type": "tuple[]"
             }
         ],
         "stateMutability": "view",

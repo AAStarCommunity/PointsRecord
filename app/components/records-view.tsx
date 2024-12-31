@@ -12,7 +12,6 @@ interface WorkRecord {
     description: string;
     month: number;
     year: number;
-    status: 'Pending';
 }
 
 interface RecordsViewProps {
@@ -21,7 +20,7 @@ interface RecordsViewProps {
 
 export default function RecordsView({ onBack }: RecordsViewProps) {
     const { address } = useAccount();
-    const [records, setRecords] = useState<bigint[]>([]);
+    const [records, setRecords] = useState<WorkRecord[]>([]);
     const { writeContract } = useWriteContract();
 
     const {
@@ -36,8 +35,29 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
     });
 
     useEffect(() => {
-        if (contractRecords) {
-            setRecords(contractRecords as bigint[]);
+        if (contractRecords && Array.isArray(contractRecords)) {
+            console.log(contractRecords);
+            const getRecordMonth = (timestamp: bigint) => {
+                // 将 BigInt 转换为毫秒（JavaScript 使用毫秒级时间戳）
+                const date = new Date(Number(timestamp) * 1000);
+                // getMonth() 返回 0-11，所以需要 +1
+                return date.getMonth() + 1;
+            };
+
+            const getRecordYear = (timestamp: bigint) => {
+                const date = new Date(Number(timestamp) * 1000);
+                return date.getFullYear();
+            };
+            // 根据实际返回类型转换
+            const formattedRecords = contractRecords.map((record: any) => ({
+                id: record.contributor,
+                user: record.contributor,
+                points: Number(record.hoursSpent),
+                description: record.description,
+                month: getRecordMonth(record.submissionTime),
+                year: getRecordYear(record.submissionTime)
+            }));
+            setRecords(formattedRecords);
         }
     }, [contractRecords]);
 
@@ -51,7 +71,13 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
                 <div className="flex justify-between">
                     <button
                         onClick={() => {
-                            toast('Coming Soon...')
+                            //   writeContract({
+                            //     address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+                            //     abi: POINTS_RECORD_ABI,
+                            //     functionName: 'challengeRecord',
+                            //     args: [recordId]
+                            //   });
+                            //   toast.dismiss(t.id);
                         }}
                         className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                     >
@@ -67,7 +93,7 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
             </div>
         ), {
             duration: Infinity,
-            position: 'top-center',
+            position: 'top-center'
         });
     };
 
@@ -105,25 +131,25 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
                 <div className="grid gap-4">
                     {records.map((record) => (
                         <div
-                            key={record.toString()}
+                            key={record.id.toString()}
                             className="bg-white shadow-md rounded-lg p-4 flex justify-between items-center"
                         >
                             <div>
-                                <p className="font-semibold">N/A</p>
+                                <p className="font-semibold">{record.description}</p>
                                 <div className="text-sm text-gray-500">
-                                    <span>Points: N/A</span>
-                                    <span className="ml-4">User: N/A</span>
+                                    <span>Points: {record.points}</span>
+                                    <span className="ml-4">User: {record.user}</span>
                                     <span className="ml-4">
-                                        Period: N/A
+                                        Period: {record.month}/{record.year}
                                     </span>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <span className="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">
-                                    N/A
+                                    Pending
                                 </span>
                                 <button
-                                    onClick={() => handleChallenge(record)}
+                                    onClick={() => handleChallenge(record.id)}
                                     className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
                                 >
                                     Challenge
