@@ -9,23 +9,19 @@ import CommitPointsForm from '@/components/commit-points-form';
 import RecordsView from '@/components/records-view';
 import { create } from 'zustand';
 
-// Add color store
-interface ColorStore {
-  bgColorFrom: string;
-  bgColorTo: string;
-  setBgColors: (from: string, to: string) => void;
-}
+// 辅助函数：将 RGB 转换为十六进制
+const rgbToHex = (r: number, g: number, b: number): string => {
+  const toHex = (n: number) => {
+    const hex = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
 
-export const useColorStore = create<ColorStore>((set) => ({
-  bgColorFrom: '#ff0000',
-  bgColorTo: '#00ff00',
-  setBgColors: (from, to) => set({ bgColorFrom: from, bgColorTo: to }),
-}));
-
-// Generate random color in red/green spectrum
+// 修改颜色生成函数，返回十六进制格式
 const getRandomColor = (isRed: boolean) => {
   const baseColor = isRed ? [255, 0, 0] : [0, 255, 0];
-  const variance = 50; // How much random variation to add
+  const variance = 50;
   
   const color = baseColor.map((c, i) => {
     if (c === 0) {
@@ -34,8 +30,26 @@ const getRandomColor = (isRed: boolean) => {
     return Math.max(0, Math.min(255, c - Math.floor(Math.random() * variance)));
   });
   
-  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  return rgbToHex(color[0], color[1], color[2]);
 };
+
+// 初始颜色使用十六进制格式
+const initialColors = {
+  from: '#ff0000',  // 红色
+  to: '#00ff00'     // 绿色
+};
+
+interface ColorStore {
+  bgColorFrom: string;
+  bgColorTo: string;
+  setBgColors: (from: string, to: string) => void;
+}
+
+export const useColorStore = create<ColorStore>((set) => ({
+  bgColorFrom: initialColors.from,
+  bgColorTo: initialColors.to,
+  setBgColors: (from, to) => set({ bgColorFrom: from, bgColorTo: to }),
+}));
 
 export default function Home() {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
