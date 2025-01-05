@@ -11,7 +11,7 @@ interface WorkRecord {
     points: number;
     description: string;
     month: number;
-    year: number;
+    year: number; 
 }
 
 interface RecordsViewProps {
