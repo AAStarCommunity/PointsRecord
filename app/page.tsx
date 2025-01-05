@@ -16,6 +16,10 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
+  // Add state for background colors
+  const [bgColorFrom, setBgColorFrom] = useState('#000000');
+  const [bgColorTo, setBgColorTo] = useState('#1a1a1a');
+
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
@@ -108,83 +112,115 @@ export default function Home() {
   }
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <div className="text-4xl font-bold text-center text-white mb-6 tracking-tight">
-          Points Record of AAStar Community
-        </div>
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            <span
-              onClick={handleWalletAction}
-              className={`${isConnected ? 'cursor-pointer hover:underline' : 'cursor-pointer hover:underline'}`}
-            >
-              {isConnected && address ? formatAddress(address) : 'Connect Wallet'}
-            </span>
-          </li>
-          <li className="mb-2">Points Commit</li>
-          <li>View or challenge</li>
-        </ol>
+    <>
+      {/* Add color picker controls in top-right corner */}
+      <div className="fixed top-4 right-4 flex gap-4 z-10">
+        {isConnected && address && (
+          <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white">
+            {formatAddress(address)}
+          </div>
+        )}
+        <input 
+          type="color" 
+          value={bgColorFrom}
+          onChange={(e) => setBgColorFrom(e.target.value)}
+          className="w-8 h-8 rounded cursor-pointer"
+          title="From Color"
+        />
+        <input 
+          type="color" 
+          value={bgColorTo}
+          onChange={(e) => setBgColorTo(e.target.value)}
+          className="w-8 h-8 rounded cursor-pointer"
+          title="To Color"
+        />
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+      {/* Update main container div with gradient background and adjusted position */}
+      <div 
+        className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]"
+        style={{
+          background: `linear-gradient(135deg, ${bgColorFrom}, ${bgColorTo})`,
+          transform: 'translateY(-20%)'
+        }}
+      >
+        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+          <div className="text-4xl font-bold text-center text-white mb-6 tracking-tight">
+            Points Record of AAStar Community
+          </div>
+          <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
+            <li className="mb-2">
+              <span
+                onClick={handleWalletAction}
+                className={`${isConnected ? 'cursor-pointer hover:underline' : 'cursor-pointer hover:underline'}`}
+              >
+                {isConnected && address ? formatAddress(address) : 'Connect Wallet'}
+              </span>
+            </li>
+            <li className="mb-2">Points Commit</li>
+            <li>View or challenge</li>
+          </ol>
+
+          <div className="flex gap-4 items-center flex-col sm:flex-row">
+            <a
+              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+              href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleCommitNow}
+            >
+              <Image
+                className="dark:invert"
+                src="/vercel.svg"
+                alt="Vercel logomark"
+                width={20}
+                height={20}
+              />
+              Commit now
+            </a><a
+              className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+              href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleView}
+            >
+              View or Challenge
+            </a>
+          </div>
+        </main>
+        <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            href="https://github.com/orgs/AAStarCommunity/repositories"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleCommitNow}
           >
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              aria-hidden
+              src="/file.svg"
+              alt="File icon"
+              width={16}
+              height={16}
             />
-            Commit now
-          </a><a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            Github
+          </a>
+          <a
+            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            href="https://aastar.io"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleView}
           >
-            View or Challenge
+            <Image
+              aria-hidden
+              src="/globe.svg"
+              alt="Globe icon"
+              width={16}
+              height={16}
+            />
+            Go to AAStar.io →
           </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://github.com/orgs/AAStarCommunity/repositories"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Github
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://aastar.io"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to AAStar.io →
-        </a>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 }
