@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Providers } from "@/components/providers";
+import { Providers } from "@/app/components/providers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";

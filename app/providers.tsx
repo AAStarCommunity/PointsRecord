@@ -2,7 +2,7 @@
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiConfig } from 'wagmi';
-import { config } from '@/config/wagmi';
+import { config } from '@/app/config/wagmi';
 import { Toaster } from 'react-hot-toast';
 
 export function Providers({ children }: { children: React.ReactNode }) {
