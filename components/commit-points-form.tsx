@@ -19,8 +19,25 @@ export default function CommitPointsForm({ onBack }: { onBack: () => void }) {
     data: hash
   } = useWriteContract();
 
+  useEffect(() => {
+    // 添加检查日志
+    console.log('CommitPointsForm mounted, checking config:', {
+      alchemyUrl: process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL,
+      contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+      walletAddress: address,
+    });
+  }, [address]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // 添加检查日志
+    console.log('Submitting transaction with config:', {
+      alchemyUrl: process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL,
+      contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+      points,
+      description,
+    });
+
     if (!address) {
       toast.error('Please connect your wallet first');
       return;
