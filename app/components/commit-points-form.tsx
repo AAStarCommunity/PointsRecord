@@ -78,6 +78,7 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
             <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full max-w-md border border-white/20 rounded-lg p-6 bg-white/10">
                 <div className="flex justify-between items-center w-full mb-6">
                     <button
+                        type="button"
                         onClick={onBack}
                         className="text-white hover:text-gray-300 flex items-center"
                     >
@@ -87,6 +88,7 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            title="Back button"
                         >
                             <path
                                 strokeLinecap="round"
@@ -94,8 +96,8 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
                                 strokeWidth={2}
                                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
                             />
-                            Back
                         </svg>
+                        Back
                     </button>
                     <div className="text-sm text-white/70">
                         Current Wallet: {address?.slice(0, 6)}...{address?.slice(-4)}

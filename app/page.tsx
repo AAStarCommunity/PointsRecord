@@ -7,7 +7,9 @@ import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect, useChainId } from 'wagmi';
 import CommitPointsForm from '@/components/commit-points-form';
 import RecordsView from '@/components/records-view';
+import { useColorStore } from '../store/color-store';
 import { create } from 'zustand';
+import { useRouter } from 'next/navigation';
 
 // 辅助函数：将 RGB 转换为十六进制
 const rgbToHex = (r: number, g: number, b: number): string => {
@@ -60,6 +62,7 @@ export default function Home() {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { bgColorFrom, bgColorTo, setBgColors } = useColorStore();
+  const router = useRouter();
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -170,7 +173,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1F0054] to-black">
       {/* Color pickers, network and wallet address */}
       <div className="fixed top-4 right-4 flex gap-4 z-10">
         {chainId && (
@@ -232,22 +235,13 @@ export default function Home() {
               </ol>
 
               <div className="flex gap-4 items-center justify-center">
-                <a
-                  className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-                  href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleCommitNow}
+                <button
+                  onClick={() => router.push('/commit')}
+                  className="px-6 py-3 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-all"
                 >
-                  <Image
-                    className="dark:invert"
-                    src="/vercel.svg"
-                    alt="Vercel logomark"
-                    width={20}
-                    height={20}
-                  />
-                  Commit now
-                </a><a
+                  Commit Now
+                </button>
+                <a
                   className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
                   href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
                   target="_blank"

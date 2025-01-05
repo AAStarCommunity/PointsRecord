@@ -1,24 +1,17 @@
 'use client';
 
-import { WagmiConfig, createConfig, configureChains } from 'wagmi';
-import { mainnet, sepolia } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
-
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet, sepolia],
-  [publicProvider()]
-);
-
-const config = createConfig({
-  autoConnect: true,
-  connectors: [
-    new MetaMaskConnector({ chains })
-  ],
-  publicClient,
-  webSocketPublicClient,
-});
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { WagmiConfig } from 'wagmi';
+import { config } from '@/config/wagmi';
+import { Toaster } from 'react-hot-toast';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <WagmiConfig config={config}>{children}</WagmiConfig>;
+  return (
+    <WagmiConfig config={config}>
+      <RainbowKitProvider>
+        {children}
+        <Toaster position="top-center" />
+      </RainbowKitProvider>
+    </WagmiConfig>
+  );
 } 
