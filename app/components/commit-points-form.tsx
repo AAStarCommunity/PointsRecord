@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { POINTS_RECORD_ABI } from '@/abi/PointsRecord';
 import { toast } from 'react-hot-toast';
-import { useColorStore } from '@/store/color-store';
 
 interface CommitPointsFormProps {
     onBack: () => void;
