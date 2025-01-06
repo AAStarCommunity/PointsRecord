@@ -108,83 +108,98 @@ export default function Home() {
   }
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <div className="text-4xl font-bold text-center text-white mb-6 tracking-tight">
-          Points Record of AAStar Community
-        </div>
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            <span
-              onClick={handleWalletAction}
-              className={`${isConnected ? 'cursor-pointer hover:underline' : 'cursor-pointer hover:underline'}`}
-            >
-              {isConnected && address ? formatAddress(address) : 'Connect Wallet'}
-            </span>
-          </li>
-          <li className="mb-2">Points Commit</li>
-          <li>View or challenge</li>
-        </ol>
+    <div className="min-h-screen bg-gray-900">
+      <div className="fixed top-4 right-4 flex gap-4 z-10">
+        {isConnected && address && (
+          <div className="bg-gray-800/50 backdrop-blur-sm px-4 py-2 rounded-full text-white/70">
+            {formatAddress(address)}
+          </div>
+        )}
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+        <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+          <div className="text-4xl font-bold text-center text-white mb-6 tracking-tight">
+            Points Record of AAStar Community
+          </div>
+
+          <div className="w-full max-w-md text-sm text-white/70 bg-yellow-600/20 border border-yellow-600/30 rounded-md p-4 mb-4">
+            <p className="flex items-center">
+              <span className="text-yellow-500 mr-2">⚠️</span>
+              Please provide your wallet address to DavidXu to authorize first.
+            </p>
+          </div>
+
+          <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)] text-white">
+            <li className="mb-2">
+              <span
+                onClick={handleWalletAction}
+                className={`${isConnected ? 'cursor-pointer hover:underline' : 'cursor-pointer hover:underline'}`}
+              >
+                {isConnected && address ? formatAddress(address) : 'Connect Wallet'}
+              </span>
+            </li>
+            <li className="mb-2">Points Commit</li>
+            <li>View or challenge</li>
+          </ol>
+
+          <div className="flex gap-4 items-center flex-col sm:flex-row">
+            <a
+              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-gray-800 text-white gap-2 hover:bg-gray-700 text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+              href="#"
+              onClick={handleCommitNow}
+            >
+              <Image
+                className="invert"
+                src="/vercel.svg"
+                alt="Vercel logomark"
+                width={20}
+                height={20}
+              />
+              Commit now
+            </a>
+            <a
+              className="rounded-full border border-solid border-white/20 transition-colors flex items-center justify-center hover:bg-gray-800 text-white text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
+              href="#"
+              onClick={handleView}
+            >
+              View or Challenge
+            </a>
+          </div>
+        </main>
+        <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center text-white">
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            href="https://github.com/orgs/AAStarCommunity/repositories"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleCommitNow}
           >
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              aria-hidden
+              src="/file.svg"
+              alt="File icon"
+              width={16}
+              height={16}
             />
-            Commit now
-          </a><a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            Github
+          </a>
+          <a
+            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            href="https://aastar.io"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleView}
           >
-            View or Challenge
+            <Image
+              aria-hidden
+              src="/globe.svg"
+              alt="Globe icon"
+              width={16}
+              height={16}
+            />
+            Go to AAStar.io →
           </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://github.com/orgs/AAStarCommunity/repositories"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Github
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://aastar.io"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to AAStar.io →
-        </a>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

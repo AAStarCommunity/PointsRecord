@@ -114,51 +114,55 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Pending Work Records</h1>
-                <button
-                    onClick={onBack}
-                    className="bg-white/20 text-white px-4 py-2 rounded hover:bg-white/30 transition-colors"
-                >
-                    Back
-                </button>
-            </div>
+        <div className="min-h-screen bg-gray-900">
+            <div className="container mx-auto max-w-4xl px-4 py-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-white">View Records</h2>
+                    <button 
+                        type="button"
+                        onClick={onBack}
+                        className="text-white hover:text-gray-200"
+                    >
+                        Back
+                    </button>
+                </div>
 
-            {records.length === 0 ? (
-                <p className="text-gray-500 text-center">No pending records found</p>
-            ) : (
-                <div className="grid gap-4">
-                    {records.map((record) => (
-                        <div
-                            key={record.id.toString()}
-                            className="bg-white shadow-md rounded-lg p-4 flex justify-between items-center"
-                        >
-                            <div>
-                                <p className="font-semibold">{record.description}</p>
-                                <div className="text-sm text-gray-500">
-                                    <span>Points: {record.points}</span>
-                                    <span className="ml-4">User: {record.user}</span>
-                                    <span className="ml-4">
-                                        Period: {record.month}/{record.year}
+                {records.length === 0 ? (
+                    <p className="text-white text-center">No pending records found</p>
+                ) : (
+                    <div className="grid gap-4">
+                        {records.map((record) => (
+                            <div
+                                key={record.id.toString()}
+                                className="bg-gray-800 shadow-md rounded-lg p-4 flex justify-between items-center"
+                            >
+                                <div>
+                                    <p className="font-semibold text-white">{record.description}</p>
+                                    <div className="text-sm text-gray-300">
+                                        <span>Points: {record.points}</span>
+                                        <span className="ml-4">User: {record.user}</span>
+                                        <span className="ml-4">
+                                            Period: {record.month}/{record.year}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <span className="px-2 py-1 rounded text-xs bg-yellow-600 text-white">
+                                        Pending
                                     </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChallenge(record.id)}
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+                                    >
+                                        Challenge
+                                    </button>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <span className="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">
-                                    Pending
-                                </span>
-                                <button
-                                    onClick={() => handleChallenge(record.id)}
-                                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
-                                >
-                                    Challenge
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
