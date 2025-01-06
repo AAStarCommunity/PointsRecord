@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { POINTS_RECORD_ABI } from '@/abi/PointsRecord';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 interface WorkRecord {
     id: bigint;
@@ -12,6 +12,13 @@ interface WorkRecord {
     description: string;
     month: number;
     year: number;
+}
+
+interface ContractRecord {
+    contributor: string;
+    hoursSpent: bigint;
+    description: string;
+    submissionTime: bigint;
 }
 
 interface RecordsViewProps {
@@ -32,15 +39,12 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
         abi: POINTS_RECORD_ABI,
         functionName: 'getPendingRecords',
         args: [],
-    });
+    }) as { data: ContractRecord[] | undefined, isLoading: boolean, error: Error | null };
 
     useEffect(() => {
         if (contractRecords && Array.isArray(contractRecords)) {
-            console.log(contractRecords);
             const getRecordMonth = (timestamp: bigint) => {
-                // 将 BigInt 转换为毫秒（JavaScript 使用毫秒级时间戳）
                 const date = new Date(Number(timestamp) * 1000);
-                // getMonth() 返回 0-11，所以需要 +1
                 return date.getMonth() + 1;
             };
 
@@ -48,9 +52,9 @@ export default function RecordsView({ onBack }: RecordsViewProps) {
                 const date = new Date(Number(timestamp) * 1000);
                 return date.getFullYear();
             };
-            // 根据实际返回类型转换
-            const formattedRecords = contractRecords.map((record: any) => ({
-                id: record.contributor,
+
+            const formattedRecords = contractRecords.map((record: ContractRecord) => ({
+                id: BigInt(record.contributor),
                 user: record.contributor,
                 points: Number(record.hoursSpent),
                 description: record.description,

@@ -18,7 +18,7 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
         writeContract,
         isPending,
         error: submitError,
-        data: hash  // 直接解构获取哈希
+        data: hash
     } = useWriteContract();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -33,9 +33,10 @@ export default function CommitPointsForm({ onBack }: CommitPointsFormProps) {
                 address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
                 abi: POINTS_RECORD_ABI,
                 functionName: 'submitWorkRecord',
-                args: [Number(points), 1, description]
+                args: [BigInt(points), BigInt(1), description]
             });
         } catch (error) {
+            console.error('Transaction error:', error);
             toast.error('Failed to submit transaction');
         }
     };
